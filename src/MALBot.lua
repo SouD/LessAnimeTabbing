@@ -1,5 +1,5 @@
--- My Anime List Bot VLC Extension. Because keeping track of anime is hard!
--- Copyright (C) 2014  Linus Sörensen aka Soudayo
+-- A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
+-- Copyright (C) 2014  Linus Sörensen aka SouD aka Soudayo
 
 -- This program is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU General Public License
@@ -173,7 +173,7 @@ MALBot = {
     info = {
         title = "MALBot",
         version = "0.0.2a",
-        author = "Soudayo",
+        author = "Linus Sörensen",
         url = 'http://soud.se',
         shortdesc = "Map to MAL", -- Text shown in context menu
         description = "TODO: Write description here.",
