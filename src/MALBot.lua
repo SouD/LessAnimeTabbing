@@ -1,5 +1,5 @@
 -- A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
--- Copyright (C) 2014  Linus Sörensen aka SouD aka Soudayo
+-- Copyright (C) 2014  Linus Sörensen
 
 -- This program is free software; you can redistribute it and/or
 -- modify it under the terms of the GNU General Public License
@@ -48,7 +48,8 @@
 -- its own function to init inheritance.
 local classes = {
     "IO",
-    "Config"
+    "Config",
+    "GUI"
 }
 
 
@@ -220,8 +221,18 @@ MALBot = {
 -- @class MALBot
 -- @return nil.
 function MALBot:activate()
-    self.config = Config:new({prefix = string.format("[%s %s]: ", self.info.title, self.info.version)})
-    self.config:load()
+
+    -- Init config
+    self.config = Config:new({prefix = string.format("[%s %s]: ",
+        self.info.title, self.info.version)})
+
+    if not self.config:load() then
+        self.config:warning("Failed to load config")
+
+        if not self.config:loaded() then
+            self.config:reset() -- Load defaults into memory
+        end
+    end
 end
 
 --- Deactivate MALBot.
@@ -276,7 +287,7 @@ function define_IO()
         end
 
         local status = os.execute('mkdir "' .. path ..'"')
-        self:print("Executed OS cmd mkdir with status: " .. status)
+        self:debug("Executed OS cmd mkdir with status: " .. status)
 
         return status
     end
@@ -301,6 +312,32 @@ function define_IO()
         else -- Kuso! No file for you...
             return false, errno
         end
+    end
+
+    --- Print to debug.
+    -- Prints object to vlc debug output. Will attempt to cast object
+    -- to string if other type.
+    -- @class IO
+    -- @param obj Object to debug.
+    -- @return Object as string on success or false on fail.
+    function IO:debug(obj)
+        if type(obj) ~= "string" then
+            obj = tostring(obj)
+
+            if not obj then
+                return false
+            end
+        end
+
+        if self.prefix then
+            obj = string.format(self.format, os.date("%H:%M:%S"), self.prefix, obj)
+        else
+            obj = string.format(self.format, os.date("%H:%M:%S"), "", obj)
+        end
+
+        vlc.msg.dbg(obj)
+
+        return obj
     end
 
     --- Print error.
@@ -449,6 +486,32 @@ function define_IO()
 
         return self:print(buffer)
     end
+
+    --- Print warning.
+    -- Prints warning to vlc warning output. Will attempt to cast warning
+    -- to string if other type.
+    -- @class IO
+    -- @param obj Warning to print.
+    -- @return Warning as string on success or false on fail.
+    function IO:warning(obj)
+        if type(obj) ~= "string" then
+            obj = tostring(obj)
+
+            if not obj then
+                return false
+            end
+        end
+
+        if self.prefix then
+            obj = string.format(self.format, os.date("%H:%M:%S"), self.prefix, obj)
+        else
+            obj = string.format(self.format, os.date("%H:%M:%S"), "", obj)
+        end
+
+        vlc.msg.warn(obj)
+
+        return obj
+    end
 end
 
 
@@ -510,7 +573,7 @@ function define_Config()
         local path = self.PATH .. self.DIRECTORY_SEPARATOR .. self.NAME
 
         if self:file_exists(path) then
-            self:print("Found config: " .. path)
+            self:debug("Found config: " .. path)
 
             local file, _, errno = io.open(path, "r")
 
@@ -548,10 +611,18 @@ function define_Config()
 
             return true
         else
-            self:print("Config not found")
+            self:debug("Config not found")
 
             return self:reset(true)
         end
+    end
+
+    --- Get config loaded status.
+    -- Returns the configs current loaded status.
+    -- @class Config
+    -- @return True if config is loaded or false otherwise.
+    function Config:load()
+        return self.loaded
     end
 
     --- Reset the config.
@@ -565,7 +636,7 @@ function define_Config()
         self.values = table_shallow_copy(self.defaults)
         self.loaded = true
 
-        self:print("Config was reset to defaults")
+        self:debug("Config was reset to defaults")
 
         if save then
             return self:save()
@@ -588,7 +659,7 @@ function define_Config()
 
         -- Check if folder exists
         if not self:dir_exists(self.PATH) then
-            self:print("Creating directory: " .. self.PATH)
+            self:debug("Creating directory: " .. self.PATH)
             local status = self:create_dir(self.PATH)
 
             if status ~= 0 then -- Might be -1 one on fail?
@@ -626,7 +697,7 @@ function define_Config()
         file:flush()
         file:close()
 
-        self:print("Config saved: " .. path)
+        self:debug("Config saved: " .. path)
 
         return true
     end
@@ -642,6 +713,84 @@ function define_Config()
             self.values[key] = value
             return value
         end
+    end
+end
+
+
+
+
+----------------
+-- MALBot GUI --
+----------------
+
+--- Defines the GUI class.
+-- @return nil.
+function define_GUI()
+
+    --- GUI class.
+    -- Contains methods to handle the VLC qt4 interface.
+    -- @class GUI
+    -- @field dialog qt4 dialog userdata object.
+    -- @field widgets Table containing active qt4 widgets.
+    GUI = inherits(nil)
+    GUI.dialog = nil
+    GUI.input = {}
+    GUI.widgets = {}
+
+    --- Close the dialog.
+    -- Closes and deletes the dialog if present.
+    -- @class GUI
+    -- @return nil.
+    function GUI:close()
+        if self.dialog ~= nil then
+            self.dialog:hide()
+
+            for k, _ in pairs(self.widgets) do
+                self.widgets[k] = nil
+            end
+
+            self.dialog:delete()
+            self.dialog = nil
+
+            collectgarbage()
+        end
+    end
+
+    --- Show the login dialog.
+    -- Setup and show the login dialog.
+    -- @class GUI
+    -- @return nil.
+    function GUI:login()
+        self:close()
+
+        local function auth_button_on_click()
+            local username = self.widgets["username"]:get_text()
+            local password = self.widgets["password"]:get_text()
+            local remember = self.widgets["remember"]:get_checked()
+
+            if string_trim(username) ~= "" and password ~= "" then
+                self.input["username"] = string_trim(username)
+                self.input["password"] = password
+                self.input["remember"] = remember
+
+                self:close()
+            end
+        end
+
+        self.dialog = vlc.dialog("Login")
+
+        self.dialog:add_label("MALBot requires your MAL login credentials to continue.", 1, 1, 6, 1)
+
+        self.dialog:add_label("Username:", 1, 2, 2, 1)
+        self.widgets["username"] = self.dialog:add_text_input("", 3, 2, 4, 1)
+
+        dialog:add_label("Password:", 1, 3, 2, 1)
+        self.widgets["password"] = self.dialog:add_password("", 3, 3, 4, 1)
+
+        self.widgets["remember"] = self.dialog:add_check_box("Remember me", false, 3, 4, 4, 1)
+
+        self.dialog:add_button("Authorize", auth_button_on_click, 3, 5, 2, 1)
+        self.dialog:add_button("Cancel", vlc.deactivate, 5, 5, 2, 1)
     end
 end
 
