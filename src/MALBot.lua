@@ -47,6 +47,7 @@
 -- An array of all classes which need to be defined within
 -- its own function to init inheritance.
 local classes = {
+    "Event",
     "IO",
     "Config",
     "GUI"
@@ -194,7 +195,6 @@ end
 -- The main class of the extension. Not defined within a define_ OO function
 -- since we need instant access to information.
 -- @class MALBot
--- @field config Instance of Config class.
 -- @field info Contains extension information.
 -- @field info.title Extension title.
 -- @field info.version Extension version.
@@ -204,7 +204,6 @@ end
 -- @field info.description Extension description.
 -- @field info.capabilities Extension capabilities like menu, input and meta.
 MALBot = {
-    config = nil,
     info = {
         title = "MALBot",
         version = "0.0.2a",
@@ -223,14 +222,11 @@ MALBot = {
 function MALBot:activate()
 
     -- Init config
-    self.config = Config:new({prefix = string.format("[%s %s]: ",
-        self.info.title, self.info.version)})
+    if not Config:instance():load() then
+        Config:instance():error("Failed to load config")
 
-    if not self.config:load() then
-        self.config:warning("Failed to load config")
-
-        if not self.config:loaded() then
-            self.config:reset() -- Load defaults into memory
+        if not Config:instance():loaded() then
+            Config:instance():reset() -- Load defaults into memory
         end
     end
 end
@@ -241,6 +237,39 @@ end
 -- @return nil.
 function MALBot:deactivate()
     self.config:save()
+end
+
+
+
+
+------------------
+-- MALBot Event --
+------------------
+
+--- Defines the Event class.
+-- @return nil.
+function define_Event()
+
+    --- Event class.
+    -- Represents an event. Fireable from shiet.
+    -- @class Event
+    -- @field _name Name of event.
+    Event = inherits(nil)
+    Event._name = nil
+
+    --- Getter/Setter for @field _name.
+    -- Returns the name of this event. If @param name is present and
+    -- is a non-empty string it will set it as the new name.
+    -- @class Event
+    -- @param name Name to set.
+    -- @return String with this events name.
+    function Event:name(name)
+        if type(name) == "string" and string_trim(name) ~= "" then
+            self._name = name
+        end
+
+        return self._name
+    end
 end
 
 
@@ -259,9 +288,9 @@ function define_IO()
     -- @class IO
     -- @field OS Operating System abbreviation constant.
     -- @field DIRECTORY_SEPARATOR Operating System directory separator.
-    -- @field format Print format string. Default is "%s %s%s".
-    -- @field out Default output function.
-    -- @field prefix Prefix to prepend to all print output.
+    -- @field _format Print format string. Default is "%s %s%s".
+    -- @field _out Default output function.
+    -- @field _prefix Prefix to prepend to all print output.
     IO = inherits(nil)
     -- Match conf dir against drive letter pattern to see if windows or posix
     if string.match(vlc.config.datadir(), "^(%w:\\).+$") then
@@ -271,9 +300,9 @@ function define_IO()
         IO.OS = "posix"
         IO.DIRECTORY_SEPARATOR = "/"
     end
-    IO.format = "%s %s%s"
-    IO.out = vlc.msg.dbg
-    IO.prefix = nil
+    IO._format = "%s %s%s"
+    IO._out = vlc.msg.dbg
+    IO._prefix = nil
 
 
     --- Create directory.
@@ -329,10 +358,10 @@ function define_IO()
             end
         end
 
-        if self.prefix then
-            obj = string.format(self.format, os.date("%H:%M:%S"), self.prefix, obj)
+        if self._prefix then
+            obj = string.format(self._format, os.date("%H:%M:%S"), self._prefix, obj)
         else
-            obj = string.format(self.format, os.date("%H:%M:%S"), "", obj)
+            obj = string.format(self._format, os.date("%H:%M:%S"), "", obj)
         end
 
         vlc.msg.dbg(obj)
@@ -355,10 +384,10 @@ function define_IO()
             end
         end
 
-        if self.prefix then
-            obj = string.format(self.format, os.date("%H:%M:%S"), self.prefix, obj)
+        if self._prefix then
+            obj = string.format(self._format, os.date("%H:%M:%S"), self._prefix, obj)
         else
-            obj = string.format(self.format, os.date("%H:%M:%S"), "", obj)
+            obj = string.format(self._format, os.date("%H:%M:%S"), "", obj)
         end
 
         vlc.msg.err(obj)
@@ -418,6 +447,20 @@ function define_IO()
         end
     end
 
+    --- Getter/Setter for @field _prefix.
+    -- Returns the current prefix. If @param prefix is present and
+    -- is a non-empty string it will set it as the new prefix.
+    -- @class IO
+    -- @param name Prefix to set.
+    -- @return String with the current prefix.
+    function IO:prefix(prefix)
+        if type(prefix) == "string" and string_trim(prefix) ~= "" then
+            self._prefix = prefix
+        end
+
+        return self._prefix
+    end
+
     --- Print argument.
     -- Prints argument to default output. Will attempt to cast argument
     -- to string if other type.
@@ -433,13 +476,13 @@ function define_IO()
             end
         end
 
-        if self.prefix then
-            obj = string.format(self.format, os.date("%H:%M:%S"), self.prefix, obj)
+        if self._prefix then
+            obj = string.format(self._format, os.date("%H:%M:%S"), self._prefix, obj)
         else
-            obj = string.format(self.format, os.date("%H:%M:%S"), "", obj)
+            obj = string.format(self._format, os.date("%H:%M:%S"), "", obj)
         end
 
-        (self.out or vlc.msg.dbg or print)(obj)
+        (self._out or vlc.msg.dbg or print)(obj)
 
         return obj
     end
@@ -502,10 +545,10 @@ function define_IO()
             end
         end
 
-        if self.prefix then
-            obj = string.format(self.format, os.date("%H:%M:%S"), self.prefix, obj)
+        if self._prefix then
+            obj = string.format(self._format, os.date("%H:%M:%S"), self._prefix, obj)
         else
-            obj = string.format(self.format, os.date("%H:%M:%S"), "", obj)
+            obj = string.format(self._format, os.date("%H:%M:%S"), "", obj)
         end
 
         vlc.msg.warn(obj)
@@ -530,22 +573,35 @@ function define_Config()
     -- @class Config
     -- @field NAME Config file name.
     -- @field PATH Config file path.
-    -- @field defaults Contains default config values.
-    -- @field defaults.username Default username value.
-    -- @field defaults.password Default password value.
-    -- @field defaults.save_credentials Default save user credentials.
-    -- @field loaded Config loaded status.
-    -- @field values Configuration key value store.
+    -- @field _defaults Contains default config values.
+    -- @field _defaults.username Default username value.
+    -- @field _defaults.password Default password value.
+    -- @field _defaults.save_credentials Default save user credentials.
+    -- @field _loaded Config loaded status.
+    -- @field _values Configuration key value store.
     Config = inherits(IO)
     Config.NAME = "MALBot.properties"
     Config.PATH = vlc.config.configdir() .. Config.DIRECTORY_SEPARATOR .. "MALBot"
-    Config.defaults = {
+    Config._defaults = {
         username = "",
         password = "",
         save_credentials = false
     }
-    Config.loaded = false
-    Config.values = {}
+    Config._loaded = false
+    Config._values = setmetatable({}, {__mode = "kv"}) -- Weak table
+
+    --- Get Config singleton instance.
+    -- Gets the singleton instance of the @class Config class.
+    -- @class Config
+    -- @return Singleton instance of @class Config.
+    function Config:instance()
+        if not CONFIG_INSTANCE then
+            CONFIG_INSTANCE = Config:new()
+            CONFIG_INSTANCE:prefix("[MALBot Config]: ")
+        end
+
+        return CONFIG_INSTANCE
+    end
 
     --- Get config value by key.
     -- Get the current value of key if configuration is loaded.
@@ -553,8 +609,8 @@ function define_Config()
     -- @param key Configuration value key.
     -- @return Valued matching key if found or nil if config not loaded.
     function Config:get(key)
-        if self.loaded then
-            return self.values[key]
+        if self._loaded then
+            return self._values[key]
         end
     end
 
@@ -566,7 +622,7 @@ function define_Config()
     -- @return True on success or already loaded or false on error.
     -- @return Error number on error.
     function Config:load()
-        if self.loaded then
+        if self._loaded then
             return true
         end
 
@@ -578,7 +634,7 @@ function define_Config()
             local file, _, errno = io.open(path, "r")
 
             if not file then
-                self.loaded = false
+                self._loaded = false
                 self:error("Failed to open config: " .. errno)
                 return false
             end
@@ -602,12 +658,12 @@ function define_Config()
                             v = tonumber(v)
                         end
 
-                        self.values[k] = v
+                        self._values[k] = v
                     end
                 end
             end
 
-            self.loaded = true
+            self._loaded = true
 
             return true
         else
@@ -621,8 +677,8 @@ function define_Config()
     -- Returns the configs current loaded status.
     -- @class Config
     -- @return True if config is loaded or false otherwise.
-    function Config:load()
-        return self.loaded
+    function Config:loaded()
+        return self._loaded
     end
 
     --- Reset the config.
@@ -633,8 +689,8 @@ function define_Config()
     -- @return Error number on error.
     function Config:reset(save)
         -- Overwrite current values with defaults
-        self.values = table_shallow_copy(self.defaults)
-        self.loaded = true
+        self._values = table_shallow_copy(self._defaults)
+        self._loaded = true
 
         self:debug("Config was reset to defaults")
 
@@ -653,7 +709,7 @@ function define_Config()
     function Config:save()
         -- TODO: Don't rewrite entire config everytime!
 
-        if not self.loaded then
+        if not self._loaded then
             return false
         end
 
@@ -709,11 +765,17 @@ function define_Config()
     -- @param value Value to set.
     -- @return Value on success or nil if config not loaded.
     function Config:set(key, value)
-        if self.loaded then
-            self.values[key] = value
+        if self._loaded then
+            self._values[key] = value
             return value
         end
     end
+
+    --- Global Config singleton instance.
+    -- Holds the Config singleton instance, available through
+    -- method Config:instance().
+    CONFIG_INSTANCE = Config:new()
+    CONFIG_INSTANCE:prefix("[MALBot Config]: ")
 end
 
 
@@ -730,27 +792,28 @@ function define_GUI()
     --- GUI class.
     -- Contains methods to handle the VLC qt4 interface.
     -- @class GUI
-    -- @field dialog qt4 dialog userdata object.
-    -- @field widgets Table containing active qt4 widgets.
+    -- @field _dialog qt4 dialog userdata object.
+    -- @field _input Dialog input table.
+    -- @field _widgets Table containing active qt4 widgets.
     GUI = inherits(nil)
-    GUI.dialog = nil
-    GUI.input = {}
-    GUI.widgets = {}
+    GUI._dialog = nil
+    GUI._input = {}
+    GUI._widgets = {}
 
     --- Close the dialog.
     -- Closes and deletes the dialog if present.
     -- @class GUI
     -- @return nil.
     function GUI:close()
-        if self.dialog ~= nil then
-            self.dialog:hide()
+        if self._dialog ~= nil then
+            self._dialog:hide()
 
-            for k, _ in pairs(self.widgets) do
-                self.widgets[k] = nil
+            for k, _ in pairs(self._widgets) do
+                self._widgets[k] = nil
             end
 
-            self.dialog:delete()
-            self.dialog = nil
+            self._dialog:delete()
+            self._dialog = nil
 
             collectgarbage()
         end
@@ -764,33 +827,33 @@ function define_GUI()
         self:close()
 
         local function auth_button_on_click()
-            local username = self.widgets["username"]:get_text()
-            local password = self.widgets["password"]:get_text()
-            local remember = self.widgets["remember"]:get_checked()
+            local username = self._widgets["username"]:get_text()
+            local password = self._widgets["password"]:get_text()
+            local remember = self._widgets["remember"]:get_checked()
 
             if string_trim(username) ~= "" and password ~= "" then
-                self.input["username"] = string_trim(username)
-                self.input["password"] = password
-                self.input["remember"] = remember
+                self._input["username"] = string_trim(username)
+                self._input["password"] = password
+                self._input["remember"] = remember
 
                 self:close()
             end
         end
 
-        self.dialog = vlc.dialog("Login")
+        self._dialog = vlc.dialog("Login")
 
-        self.dialog:add_label("MALBot requires your MAL login credentials to continue.", 1, 1, 6, 1)
+        self._dialog:add_label("MALBot requires your MAL login credentials to continue.", 1, 1, 6, 1)
 
-        self.dialog:add_label("Username:", 1, 2, 2, 1)
-        self.widgets["username"] = self.dialog:add_text_input("", 3, 2, 4, 1)
+        self._dialog:add_label("Username:", 1, 2, 2, 1)
+        self._widgets["username"] = self._dialog:add_text_input("", 3, 2, 4, 1)
 
-        dialog:add_label("Password:", 1, 3, 2, 1)
-        self.widgets["password"] = self.dialog:add_password("", 3, 3, 4, 1)
+        self._dialog:add_label("Password:", 1, 3, 2, 1)
+        self._widgets["password"] = self._dialog:add_password("", 3, 3, 4, 1)
 
-        self.widgets["remember"] = self.dialog:add_check_box("Remember me", false, 3, 4, 4, 1)
+        self._widgets["remember"] = self._dialog:add_check_box("Remember me", false, 3, 4, 4, 1)
 
-        self.dialog:add_button("Authorize", auth_button_on_click, 3, 5, 2, 1)
-        self.dialog:add_button("Cancel", vlc.deactivate, 5, 5, 2, 1)
+        self._dialog:add_button("Authorize", auth_button_on_click, 3, 5, 2, 1)
+        self._dialog:add_button("Cancel", vlc.deactivate, 5, 5, 2, 1)
     end
 end
 
