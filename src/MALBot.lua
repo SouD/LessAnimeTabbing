@@ -47,7 +47,7 @@
 -- An array of all classes which need to be defined within
 -- its own function to init inheritance.
 local classes = {
-    "Event",
+    "Publisher",
     "IO",
     "Config",
     "GUI"
@@ -184,6 +184,11 @@ function table_shallow_copy(t)
     return t2
 end
 
+--- Globally defined messages (events)
+local msg = {
+    TEST_MESSAGE = "TEST_MESSAGE"
+}
+
 
 
 
@@ -242,33 +247,77 @@ end
 
 
 
-------------------
--- MALBot Event --
-------------------
+----------------------
+-- MALBot Publisher --
+----------------------
 
---- Defines the Event class.
+--- Defines the Publisher class.
 -- @return nil.
-function define_Event()
+function define_Publisher()
 
-    --- Event class.
-    -- Represents an event. Fireable from shiet.
-    -- @class Event
-    -- @field _name Name of event.
-    Event = inherits(nil)
-    Event._name = nil
+    --- Publisher class.
+    -- Can publish messages (events) and pipe to all subscribers.
+    -- @class Publisher
+    -- @field _subs Table with all message subscribers.
+    Publisher = inherits(nil)
+    Publisher._subs = {} -- Lets pretend that this is a static member...
 
-    --- Getter/Setter for @field _name.
-    -- Returns the name of this event. If @param name is present and
-    -- is a non-empty string it will set it as the new name.
-    -- @class Event
-    -- @param name Name to set.
-    -- @return String with this events name.
-    function Event:name(name)
-        if type(name) == "string" and string_trim(name) ~= "" then
-            self._name = name
+    --- Publish a message.
+    -- Invokes every subscribe handler for the given message. Any additional
+    -- arguments will be passed along to the handler.
+    -- @class Publisher
+    -- @param msg Message to publish.
+    -- @param ... Message args to send.
+    -- @return True if at least one handle was called or false if none.
+    function Publisher:publish(msg, ...)
+        local subs = Publisher._subs[msg] or {}
+        local published = false
+
+        for _, handler in pairs(subs) do
+            if type(handler) == "function" then
+                handler(...)
+
+                if not published then
+                    published = true
+                end
+            end
         end
 
-        return self._name
+        return published
+    end
+
+    --- Subscribe to a message.
+    -- When the message is published the supplied handler will be
+    -- called with any extra parameters sent to Publisher:publish().
+    -- Chainable.
+    -- @class Publisher
+    -- @param msg Message to subscribe to.
+    -- @param handler Message handler.
+    -- @return self.
+    function Publisher:subscribe(msg, handler)
+        if type(Publisher._subs[msg]) ~= "table" then
+            Publisher._subs[msg] = {}
+        end
+
+        Publisher._subs[msg][tostring(handler)] = handler
+
+        return self
+    end
+
+    --- Unsubscribe from a message.
+    -- Removes the supplied handler from the give message subscriber list.
+    -- Chainable.
+    -- @class Publisher
+    -- @param msg Message to unsubscribe from.
+    -- @param handler Handler to unsubscribe.
+    -- @return self.
+    function Publisher:unsubscribe(msg, handler)
+        if type(Publisher._subs[msg]) == "table" then
+            Publisher._subs[msg][tostring(handler)] = nil
+            collectgarbage()
+        end
+
+        return self
     end
 end
 
@@ -303,7 +352,6 @@ function define_IO()
     IO._format = "%s %s%s"
     IO._out = vlc.msg.dbg
     IO._prefix = nil
-
 
     --- Create directory.
     -- Attempt to create a directory on supplied path.
@@ -588,7 +636,7 @@ function define_Config()
         save_credentials = false
     }
     Config._loaded = false
-    Config._values = setmetatable({}, {__mode = "kv"}) -- Weak table
+    Config._values = {}
 
     --- Get Config singleton instance.
     -- Gets the singleton instance of the @class Config class.
