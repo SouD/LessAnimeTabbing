@@ -184,11 +184,6 @@ function table_shallow_copy(t)
     return t2
 end
 
---- Globally defined messages (events)
-local msg = {
-    TEST_MESSAGE = "TEST_MESSAGE"
-}
-
 
 
 
@@ -209,6 +204,7 @@ local msg = {
 -- @field info.description Extension description.
 -- @field info.capabilities Extension capabilities like menu, input and meta.
 MALBot = {
+    gui = nil,
     info = {
         title = "MALBot",
         version = "0.0.2a",
@@ -234,6 +230,22 @@ function MALBot:activate()
             Config:instance():reset() -- Load defaults into memory
         end
     end
+
+    -- Hey this is almost like dependency injection! Sugoi!
+    -- TODO: Override new and pass Publisher:new() directly as arg
+    self.gui = GUI:new({_publisher = Publisher:new()})
+
+    local handler = function(msg, ...)
+        local arg1 = select(1, ...)
+        IO:debug(msg .. " recieved, data: " .. arg1)
+    end
+
+    -- Lets see if we can sub to this...
+    Publisher:subscribe(MSG_GUI_DIALOG_SHOW, handler)
+    -- Publisher:subscribe(MSG_GUI_INPUT_AUTH, handler)
+
+    -- Will trigger the MSG_GUI_DIALOG_SHOW
+    self.gui:login()
 end
 
 --- Deactivate MALBot.
@@ -241,7 +253,7 @@ end
 -- @class MALBot
 -- @return nil.
 function MALBot:deactivate()
-    self.config:save()
+    Config:instance():save()
 end
 
 
@@ -270,20 +282,27 @@ function define_Publisher()
     -- @param ... Message args to send.
     -- @return True if at least one handle was called or false if none.
     function Publisher:publish(msg, ...)
+        if type(msg) ~= "string" or msg == "" then
+            return false
+        end
+
         local subs = Publisher._subs[msg] or {}
-        local published = false
+        local count = 0
 
         for _, handler in pairs(subs) do
             if type(handler) == "function" then
-                handler(...)
-
-                if not published then
-                    published = true
-                end
+                handler(msg, ...)
+                count = count + 1
             end
         end
 
-        return published
+        if count > 0 then
+            -- TODO: Inherit IO or use global namespace?
+            vlc.msg.dbg(string.format("%s [MALBot Publisher]: %s sent to %d subscriber(s)",
+                os.date("%H:%M:%S"), msg, count))
+        end
+
+        return count > 0
     end
 
     --- Subscribe to a message.
@@ -293,8 +312,12 @@ function define_Publisher()
     -- @class Publisher
     -- @param msg Message to subscribe to.
     -- @param handler Message handler.
-    -- @return self.
+    -- @return False on error else self.
     function Publisher:subscribe(msg, handler)
+        if type(msg) ~= "string" or msg == "" then
+            return false
+        end
+
         if type(Publisher._subs[msg]) ~= "table" then
             Publisher._subs[msg] = {}
         end
@@ -310,8 +333,12 @@ function define_Publisher()
     -- @class Publisher
     -- @param msg Message to unsubscribe from.
     -- @param handler Handler to unsubscribe.
-    -- @return self.
+    -- @return False on error else self.
     function Publisher:unsubscribe(msg, handler)
+        if type(msg) ~= "string" or msg == "" then
+            return false
+        end
+
         if type(Publisher._subs[msg]) == "table" then
             Publisher._subs[msg][tostring(handler)] = nil
             collectgarbage()
@@ -786,7 +813,7 @@ function define_Config()
 
         local save_credentials = self:get("save_credentials")
 
-        for k, v in pairs(self.values) do
+        for k, v in pairs(self._values) do
             if (string_trim(k) == "username" or string_trim(k) == "password") and not save_credentials then
                 -- Do nothing
             else
@@ -837,16 +864,37 @@ end
 -- @return nil.
 function define_GUI()
 
+    --- Globally available messages
+    MSG_GUI_DIALOG_CLOSE_AFTER = "MSG_GUI_DIALOG_CLOSE_AFTER"
+    MSG_GUI_DIALOG_CLOSE_BEFORE = "MSG_GUI_DIALOG_CLOSE_BEFORE"
+    MSG_GUI_DIALOG_SHOW = "MSG_GUI_DIALOG_SHOW"
+    MSG_GUI_INPUT_AUTH = "MSG_GUI_INPUT_AUTH"
+
     --- GUI class.
     -- Contains methods to handle the VLC qt4 interface.
     -- @class GUI
     -- @field _dialog qt4 dialog userdata object.
     -- @field _input Dialog input table.
     -- @field _widgets Table containing active qt4 widgets.
+    -- @field _publisher Optional instance of @class Publisher.
     GUI = inherits(nil)
     GUI._dialog = nil
     GUI._input = {}
     GUI._widgets = {}
+    GUI._publisher = nil
+
+    --- Publish a message.
+    -- Publishes a message using the injected publisher if there is one.
+    -- This method is for internal use only.
+    -- @class GUI
+    -- @param msg Message to publish.
+    -- @param ... Message args to send.
+    -- @return nil.
+    function GUI:_publish(msg, ...)
+        if type(self._publisher) == "table" and type(self._publisher.publish) == "function" then
+            self._publisher:publish(msg, ...)
+        end
+    end
 
     --- Close the dialog.
     -- Closes and deletes the dialog if present.
@@ -854,16 +902,20 @@ function define_GUI()
     -- @return nil.
     function GUI:close()
         if self._dialog ~= nil then
+            self:_publish(MSG_GUI_DIALOG_CLOSE_BEFORE)
+
             self._dialog:hide()
 
             for k, _ in pairs(self._widgets) do
                 self._widgets[k] = nil
             end
 
-            self._dialog:delete()
+            -- self._dialog:delete()
             self._dialog = nil
 
             collectgarbage()
+
+            self:_publish(MSG_GUI_DIALOG_CLOSE_AFTER)
         end
     end
 
@@ -874,6 +926,7 @@ function define_GUI()
     function GUI:login()
         self:close()
 
+        local title = "Login"
         local function auth_button_on_click()
             local username = self._widgets["username"]:get_text()
             local password = self._widgets["password"]:get_text()
@@ -885,10 +938,13 @@ function define_GUI()
                 self._input["remember"] = remember
 
                 self:close()
+
+                -- Tell subs that user input auth data
+                self:_publish(MSG_GUI_INPUT_AUTH)
             end
         end
 
-        self._dialog = vlc.dialog("Login")
+        self._dialog = vlc.dialog(title)
 
         self._dialog:add_label("MALBot requires your MAL login credentials to continue.", 1, 1, 6, 1)
 
@@ -902,6 +958,9 @@ function define_GUI()
 
         self._dialog:add_button("Authorize", auth_button_on_click, 3, 5, 2, 1)
         self._dialog:add_button("Cancel", vlc.deactivate, 5, 5, 2, 1)
+
+        -- Tell our sweet subs that something is showing! =(^_^)=
+        self:_publish(MSG_GUI_DIALOG_SHOW, title)
     end
 end
 
