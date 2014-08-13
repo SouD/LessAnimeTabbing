@@ -50,6 +50,8 @@ local classes = {
     "Publisher",
     "IO",
     "Config",
+    "Net",
+    "API",
     "GUI"
 }
 
@@ -184,6 +186,66 @@ function table_shallow_copy(t)
     return t2
 end
 
+--------------------------------------------------------------------------------
+-- working lua base64 codec (c) 2006-2008 by Alex Kloss
+-- compatible with lua 5.1
+-- http://www.it-rfc.de
+-- licensed under the terms of the LGPL2
+
+-- bitshift functions (<<, >> equivalent)
+-- shift left
+function lsh(value,shift)
+    return (value*(2^shift)) % 256
+end
+
+-- shift right
+function rsh(value,shift)
+    return math.floor(value/2^shift) % 256
+end
+
+-- return single bit (for OR)
+function bit(x,b)
+    return (x % 2^b - x % 2^(b-1) > 0)
+end
+
+-- logic OR for number values
+function lor(x,y)
+    result = 0
+    for p=1,8 do result = result + (((bit(x,p) or bit(y,p)) == true) and 2^(p-1) or 0) end
+    return result
+end
+
+-- encryption table
+local base64chars = {[0]='A',[1]='B',[2]='C',[3]='D',[4]='E',[5]='F',[6]='G',[7]='H',[8]='I',[9]='J',[10]='K',[11]='L',[12]='M',[13]='N',[14]='O',[15]='P',[16]='Q',[17]='R',[18]='S',[19]='T',[20]='U',[21]='V',[22]='W',[23]='X',[24]='Y',[25]='Z',[26]='a',[27]='b',[28]='c',[29]='d',[30]='e',[31]='f',[32]='g',[33]='h',[34]='i',[35]='j',[36]='k',[37]='l',[38]='m',[39]='n',[40]='o',[41]='p',[42]='q',[43]='r',[44]='s',[45]='t',[46]='u',[47]='v',[48]='w',[49]='x',[50]='y',[51]='z',[52]='0',[53]='1',[54]='2',[55]='3',[56]='4',[57]='5',[58]='6',[59]='7',[60]='8',[61]='9',[62]='-',[63]='_'}
+
+-- function encode
+-- encodes input string to base64.
+function enc(data)
+    local bytes = {}
+    local result = ""
+    for spos=0,string.len(data)-1,3 do
+        for byte=1,3 do bytes[byte] = string.byte(string.sub(data,(spos+byte))) or 0 end
+        result = string.format('%s%s%s%s%s',result,base64chars[rsh(bytes[1],2)],base64chars[lor(lsh((bytes[1] % 4),4), rsh(bytes[2],4))] or "=",((#data-spos) > 1) and base64chars[lor(lsh(bytes[2] % 16,2), rsh(bytes[3],6))] or "=",((#data-spos) > 2) and base64chars[(bytes[3] % 64)] or "=")
+    end
+    return result
+end
+
+-- decryption table
+local base64bytes = {['A']=0,['B']=1,['C']=2,['D']=3,['E']=4,['F']=5,['G']=6,['H']=7,['I']=8,['J']=9,['K']=10,['L']=11,['M']=12,['N']=13,['O']=14,['P']=15,['Q']=16,['R']=17,['S']=18,['T']=19,['U']=20,['V']=21,['W']=22,['X']=23,['Y']=24,['Z']=25,['a']=26,['b']=27,['c']=28,['d']=29,['e']=30,['f']=31,['g']=32,['h']=33,['i']=34,['j']=35,['k']=36,['l']=37,['m']=38,['n']=39,['o']=40,['p']=41,['q']=42,['r']=43,['s']=44,['t']=45,['u']=46,['v']=47,['w']=48,['x']=49,['y']=50,['z']=51,['0']=52,['1']=53,['2']=54,['3']=55,['4']=56,['5']=57,['6']=58,['7']=59,['8']=60,['9']=61,['-']=62,['_']=63,['=']=nil}
+
+-- function decode
+-- decode base64 input to string
+function dec(data)
+    local chars = {}
+    local result=""
+    for dpos=0,string.len(data)-1,4 do
+        for char=1,4 do chars[char] = base64bytes[(string.sub(data,(dpos+char),(dpos+char)) or "=")] end
+        result = string.format('%s%s%s%s',result,string.char(lor(lsh(chars[1],2), rsh(chars[2],4))),(chars[3] ~= nil) and string.char(lor(lsh(chars[2],4), rsh(chars[3],2))) or "",(chars[4] ~= nil) and string.char(lor(lsh(chars[3],6) % 192, (chars[4]))) or "")
+    end
+    return result
+end
+--------------------------------------------------------------------------------
+
 
 
 
@@ -195,6 +257,8 @@ end
 -- The main class of the extension. Not defined within a define_ OO function
 -- since we need instant access to information.
 -- @class MALBot
+-- @field _api Contains an instance of @class API.
+-- @field _gui Contains an instance of @class GUI.
 -- @field info Contains extension information.
 -- @field info.title Extension title.
 -- @field info.version Extension version.
@@ -203,8 +267,10 @@ end
 -- @field info.shortdesc Short extension description.
 -- @field info.description Extension description.
 -- @field info.capabilities Extension capabilities like menu, input and meta.
+-- @field _publisher Contains an instance of @class Publisher.
 MALBot = {
-    gui = nil,
+    _api = nil,
+    _gui = nil,
     info = {
         title = "MALBot",
         version = "0.0.2a",
@@ -213,7 +279,8 @@ MALBot = {
         shortdesc = "Map to MAL", -- Text shown in context menu
         description = "TODO: Write description here.",
         capabilities = {}
-    }
+    },
+    _publisher = nil
 }
 
 --- Activate MALBot.
@@ -231,21 +298,56 @@ function MALBot:activate()
         end
     end
 
+    -- Subscribe to messages
+    self._publisher = Publisher:new()
+    self._publisher:subscribe(MSG_GUI_INPUT_AUTH, function(msg, ...)
+        self:auth_input_handler(msg, ...)
+    end)
+
+    -- Init members
+    self._api = API:new()
     -- Hey this is almost like dependency injection! Sugoi!
-    -- TODO: Override new and pass Publisher:new() directly as arg
-    self.gui = GUI:new({_publisher = Publisher:new()})
+    self._gui = GUI:new(Publisher:new())
 
-    local handler = function(msg, ...)
-        local arg1 = select(1, ...)
-        IO:debug(msg .. " recieved, data: " .. arg1)
+    local save_credentials = Config:instance():get("save_credentials")
+
+    if not save_credentials then
+        self._gui:login()
+    else
+        self:auth()
     end
+end
 
-    -- Lets see if we can sub to this...
-    Publisher:subscribe(MSG_GUI_DIALOG_SHOW, handler)
-    -- Publisher:subscribe(MSG_GUI_INPUT_AUTH, handler)
+--- Run authentication.
+-- Attempts to authenticate the user with input or saved credentials.
+-- @class MALBot
+-- @return nil.
+function MALBot:auth()
+    local username = Config:instance():get("username")
+    local password = Config:instance():get("password")
 
-    -- Will trigger the MSG_GUI_DIALOG_SHOW
-    self.gui:login()
+    if self._api:auth(username, password) then
+        -- TODO: ???
+    else -- Show login dialog on fail
+        self._gui:login()
+    end
+end
+
+--- Handler for auth input.
+-- This is a handler function which responds to the
+-- MSG_GUI_INPUT_AUTH message. It retreives the input
+-- user data and stores it in the config.
+-- @param msg Message this handler is subscribed to.
+-- @param ... Any other args sent.
+-- @return nil.
+function MALBot:auth_input_handler(msg, ...)
+    Config:instance():set("username", self._gui:get("username"))
+    Config:instance():set("password", self._gui:get("password"))
+    Config:instance():set("save_credentials", self._gui:get("save_credentials"))
+
+    self._gui:clear_input()
+
+    self:auth()
 end
 
 --- Deactivate MALBot.
@@ -857,6 +959,171 @@ end
 
 
 ----------------
+-- MALBot Net --
+----------------
+
+--- Defines the Net, Request and Response classes.
+-- @return nil.
+function define_Net()
+
+    --- Net class.
+    -- Contains methods for using the internet. Sort of.
+    -- @class Net
+    -- @field _connection The current connection.
+    -- @field _connected Connection status boolean.
+    Net = inherits(IO)
+    Net._connection = nil
+    Net._connected = false
+
+    --- Request class.
+    -- Represents a HTTP request.
+    -- @class Request
+    -- @field _data Contains request data.
+    -- @field _executed Request status boolean.
+    -- @field _host Request host.
+    -- @field _method Request method.
+    -- @field _path Request path.
+    Request = inherits(nil)
+    Request.GET = "GET"
+    Request.POST = "POST"
+    Request._data = nil
+    Request._executed = false
+    Request._headers = {}
+    Request._host = nil
+    Request._method = nil
+    Request._path = nil
+
+    Request._new = Request.new
+    --- Request constructor.
+    -- Creates a new instance of @class Request.
+    -- @class Request
+    -- @param path Request path.
+    -- @param host Request host.
+    -- @param data Request data.
+    -- @return Instance of @class Request.
+    function Request:new(method, path, host, data)
+        return self._new(self, {
+            _method = method,
+            _path = path,
+            _host = host,
+            _data = data
+        })
+    end
+
+    --- Add basic auth to request.
+    -- Adds the basic authentication header to the request. Base64
+    -- encodes the given username and password to the correct format.
+    -- @class Request
+    -- @param username Username to send.
+    -- @param password Password to send.
+    -- @return True on success or false on error.
+    function Request:add_basic_auth(username, password)
+        if self._executed then
+            return false
+        end
+
+        if type(username) ~= "string" or username == "" then
+            return false
+        end
+
+        if type(password) ~= "string" or password == "" then
+            return false
+        end
+
+        local header = "Authorization"
+        local creadentials = username .. ":" .. password
+        local value = "Basic " .. enc(creadentials)
+
+        return self:add_header(header, value)
+    end
+
+    --- Add header to request.
+    -- Adds a header with the associated value to the request.
+    -- @class Request
+    -- @param header Header field to add.
+    -- @param value Value of header field.
+    -- @return True on success or false on error.
+    function Request:add_header(header, value)
+        if self._executed then
+            return false
+        end
+
+        if type(header) ~= "string" or header == "" then
+            return false
+        end
+
+        if value == nil then
+            return false
+        end
+
+        if type(self._headers) ~= "table" then
+            self._headers = {}
+        end
+
+        self._headers[header] = value
+
+        return true
+    end
+end
+
+
+
+
+----------------
+-- MALBot API --
+----------------
+
+--- Defines the API class.
+-- @return nil.
+function define_API()
+
+    --- myanimelist.net API class.
+    -- Contains methods to handle interfacing with MAL's public API.
+    -- @class API
+    -- @field HOST API host.
+    -- @field PORT API port.
+    -- @field VERIFY_CREDENTIALS Authentication path.
+    -- @field ANIME_SEARCH Search for anime path.
+    -- @field ANIME_ADD Add anime to list path.
+    -- @field ANIME_UPDATE Update anime list entry path.
+    -- @field ANIME_DELETE Delete anime from list path.
+    -- @field _auth Authentication status boolean.
+    API = inherits(nil)
+    API.HOST = "myanimelist.net"
+    API.PORT = 80
+    API.VERIFY_CREDENTIALS = "/api/account/verify_credentials.xml" -- GET
+    API.ANIME_SEARCH = "/api/anime/search.xml?q=%s" -- GET, req auth
+    API.ANIME_ADD = "/api/animelist/add/%d.xml" -- POST, req auth
+    API.ANIME_UPDATE = "/api/animelist/update/%d.xml" -- POST, req auth
+    API.ANIME_DELETE = "/api/animelist/delete/%d.xml" -- POST|DELETE, req auth
+    API._auth = false
+
+    --- Authenticate user credentials.
+    -- Attempts to authenticate input user credentials against MAL's API.
+    -- @param username Username to authenticate.
+    -- @param password Password to authenticate.
+    -- @return True on success or false on fail.
+    function API:auth(username, password)
+        if type(username) ~= "string" or username == "" then
+            return false
+        end
+
+        if type(password) ~= "string" or password == "" then
+            return false
+        end
+
+        local req = Request:new(Request.GET, self.VERIFY_CREDENTIALS, self.HOST, nil)
+
+        req:add_basic_auth(username, password)
+
+        return false
+    end
+end
+
+
+
+
+----------------
 -- MALBot GUI --
 ----------------
 
@@ -883,6 +1150,18 @@ function define_GUI()
     GUI._widgets = {}
     GUI._publisher = nil
 
+    GUI._new = Gui.new
+    --- GUI constructor.
+    -- Creates a new instance of @class GUI.
+    -- @class GUI
+    -- @param publisher Optional instance of @class Publisher.
+    -- @return Instance of @class GUI.
+    function GUI:new(publisher)
+        return self._new(self, {
+            _publisher = publisher
+        })
+    end
+
     --- Publish a message.
     -- Publishes a message using the injected publisher if there is one.
     -- This method is for internal use only.
@@ -893,6 +1172,16 @@ function define_GUI()
     function GUI:_publish(msg, ...)
         if type(self._publisher) == "table" and type(self._publisher.publish) == "function" then
             self._publisher:publish(msg, ...)
+        end
+    end
+
+    --- Clears input table.
+    -- Clears all user input data from @field _input.
+    -- @class GUI
+    -- @return nil.
+    function GUI:clear_input()
+        for k, _ in pairs(self._input) do
+            self._input[k] = nil
         end
     end
 
@@ -919,6 +1208,15 @@ function define_GUI()
         end
     end
 
+    --- Get user input data.
+    -- Attempt to retreive the input data matching supplied key.
+    -- @class GUI
+    -- @param key Key to look for.
+    -- @return Value matching key or nil.
+    function GUI:get(key)
+        return self._input[key]
+    end
+
     --- Show the login dialog.
     -- Setup and show the login dialog.
     -- @class GUI
@@ -930,12 +1228,12 @@ function define_GUI()
         local function auth_button_on_click()
             local username = self._widgets["username"]:get_text()
             local password = self._widgets["password"]:get_text()
-            local remember = self._widgets["remember"]:get_checked()
+            local save_credentials = self._widgets["save_credentials"]:get_checked()
 
-            if string_trim(username) ~= "" and password ~= "" then
-                self._input["username"] = string_trim(username)
+            if username ~= "" and password ~= "" then
+                self._input["username"] = username
                 self._input["password"] = password
-                self._input["remember"] = remember
+                self._input["save_credentials"] = save_credentials
 
                 self:close()
 
@@ -954,13 +1252,21 @@ function define_GUI()
         self._dialog:add_label("Password:", 1, 3, 2, 1)
         self._widgets["password"] = self._dialog:add_password("", 3, 3, 4, 1)
 
-        self._widgets["remember"] = self._dialog:add_check_box("Remember me", false, 3, 4, 4, 1)
+        self._widgets["save_credentials"] = self._dialog:add_check_box("Remember me", false, 3, 4, 4, 1)
 
         self._dialog:add_button("Authorize", auth_button_on_click, 3, 5, 2, 1)
         self._dialog:add_button("Cancel", vlc.deactivate, 5, 5, 2, 1)
 
         -- Tell our sweet subs that something is showing! =(^_^)=
         self:_publish(MSG_GUI_DIALOG_SHOW, title)
+    end
+
+    --- Get publisher.
+    -- Getter for @field _publisher.
+    -- @class GUI
+    -- @return Instance of @class Publisher or nil if not injected.
+    function GUI:publisher()
+        return self._publisher
     end
 end
 
