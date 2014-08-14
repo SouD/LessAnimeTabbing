@@ -1,6 +1,8 @@
+##MALBot
+
 A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
 
-#TODO
+###TODO
 
 1. Finish Request and Response classes.
 2. Net class.
@@ -8,7 +10,7 @@ A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
 4. ????
 5. Write a better readme.
 
-#DISCLAIMER
+###DISCLAIMER
 
 I am not in any way associated with myanimelist.net (henceforth known
 as *MAL*) or the creators/maintainers of *MAL*. I am simply a *MAL* user.
@@ -22,7 +24,7 @@ across the internet with each request made by MALBot.
 
 **Use at your own discretion!**
 
-#NEWS
+###NEWS
 
 Now with weird object-oriented classes and inheritance!
 
