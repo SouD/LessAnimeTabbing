@@ -1,6 +1,7 @@
 .DS_Store
 Thumbs.db
-install.sh
 design.txt
 vlc_structure.txt
 MALBot_old.lua
+
+bin/
