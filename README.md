@@ -5,10 +5,9 @@ A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
 ###TODO
 
 1. Finish Request and Response classes.
-2. Net class.
-3. Create input and playlist classes.
-4. ????
-5. Write a better readme.
+2. Create input and playlist classes.
+3. ????
+4. Write a better readme.
 
 ###DISCLAIMER
 
@@ -32,9 +31,8 @@ New working title:
 *How to annoy people by obscuring parent classes and alienating children.*
 
 Written to the tune of:
-
-- *Highschool of the Dead - Kishida Kyōdan ft. Akeboshi Rockets.*
-- *Ambiguous - GARNiDELiA.*
-- *Ala Mode - Mindless Self Indulgence.*
-- *Evening Wear - Mindless Self Indulgence.*
-- *Bass Slut X-FIR3 Remix - S3RL.*
+- Highschool of the Dead - Kishida Kyōdan ft. Akeboshi Rockets.
+- Ambiguous - GARNiDELiA.
+- Ala Mode - Mindless Self Indulgence.
+- Evening Wear - Mindless Self Indulgence.
+- Bass Slut X-FIR3 Remix - S3RL.

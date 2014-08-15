@@ -18,11 +18,18 @@
 
 --- Classes used.
 -- An array of all classes.
+-- The classes will become available in the global namespace
+-- in the order they are defined in.
+-- The order is important since an error would occur
+-- if a class attempts to inherit another class which
+-- hasn't been loaded.
 local classes = {
     "Publisher",
     "IO",
     "Config",
     "Net",
+    "Response",
+    "Request",
     "API",
     "GUI"
 }

@@ -69,6 +69,7 @@ function MALBot:activate()
 
     -- Init members
     self._api = API:new()
+    self._api:prefix("[MALBot API]: ")
     -- Hey this is almost like dependency injection! Sugoi!
     self._gui = GUI:new(Publisher:new())
 

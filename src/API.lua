@@ -16,6 +16,25 @@
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+--- Notes for XML parsing with vlc.xml
+--
+-- If node type is 1 then it's a opening tag.
+-- If node type is 3 then it's a value.
+-- If node type is 2 then it's a closing tag.
+--
+-- Example code:
+-- local body = response:body() or ""
+-- local stream = vlc.memory_stream(body)
+-- local xml = vlc.xml()
+-- local reader = xml:create_reader(stream)
+-- local node_type, name = reader:next_node()
+--
+-- while node_type > 0 do
+--     self:debug(node_type .. ":" .. name)
+--     node_type, name = reader:next_node()
+-- end
+
+
 --- Defines the API class.
 -- @return nil.
 function define_API()
@@ -30,7 +49,7 @@ function define_API()
     -- @field ANIME_UPDATE Update anime list entry path.
     -- @field ANIME_DELETE Delete anime from list path.
     -- @field _auth Authentication status boolean.
-    API = inherits(nil)
+    API = inherits(IO)
     API.HOST = "myanimelist.net"
     API.VERIFY_CREDENTIALS = "/api/account/verify_credentials.xml" -- GET
     API.ANIME_SEARCH = "/api/anime/search.xml?q=%s" -- GET, req auth
@@ -53,12 +72,19 @@ function define_API()
             return false
         end
 
-        local req = Request:new(Request.GET, self.VERIFY_CREDENTIALS, self.HOST, nil, nil)
+        local request = Request:new(Request.GET, self.VERIFY_CREDENTIALS, self.HOST, nil, nil)
+        request:add_basic_auth(username, password)
+        local response = request:execute()
 
-        req:add_basic_auth(username, password)
-
-        local res = req:execute()
-
-        return false
+        if response:status() == 200 then
+            self:debug("Authentication successful, welcome " .. username)
+            return true
+        elseif response:status() == 204 then
+            self:debug("Authentication failed")
+            return false
+        else
+            self:warning("Unexpected HTTP response status code: " .. response:status())
+            return false
+        end
     end
 end
