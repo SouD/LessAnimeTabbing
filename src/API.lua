@@ -24,7 +24,6 @@ function define_API()
     -- Contains methods to handle interfacing with MAL's public API.
     -- @class API
     -- @field HOST API host.
-    -- @field PORT API port.
     -- @field VERIFY_CREDENTIALS Authentication path.
     -- @field ANIME_SEARCH Search for anime path.
     -- @field ANIME_ADD Add anime to list path.
@@ -33,7 +32,6 @@ function define_API()
     -- @field _auth Authentication status boolean.
     API = inherits(nil)
     API.HOST = "myanimelist.net"
-    API.PORT = 80
     API.VERIFY_CREDENTIALS = "/api/account/verify_credentials.xml" -- GET
     API.ANIME_SEARCH = "/api/anime/search.xml?q=%s" -- GET, req auth
     API.ANIME_ADD = "/api/animelist/add/%d.xml" -- POST, req auth
@@ -55,9 +53,11 @@ function define_API()
             return false
         end
 
-        local req = Request:new(Request.GET, self.VERIFY_CREDENTIALS, self.HOST, nil)
+        local req = Request:new(Request.GET, self.VERIFY_CREDENTIALS, self.HOST, nil, nil)
 
         req:add_basic_auth(username, password)
+
+        local res = req:execute()
 
         return false
     end
