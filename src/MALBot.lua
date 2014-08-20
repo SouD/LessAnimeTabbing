@@ -90,8 +90,8 @@ function MALBot:auth()
     local username = Config:instance():get("username")
     local password = Config:instance():get("password")
 
-    if self._api:auth(username, password) then
-        -- TODO: ???
+    if self._api:authenticate(username, password) then
+        self:run()
     else -- Show login dialog on fail
         self._gui:login()
     end
@@ -120,4 +120,21 @@ end
 -- @return nil.
 function MALBot:deactivate()
     Config:instance():save()
+end
+
+--- Run MALBot.
+-- Run through the entire workflow once.
+-- Will perform the following tasks in order:
+--   1. Check if there is anything in the playlist.
+--   2. If there is, show the mapping dialog.
+--   3. For each item, parse out info like name, ep. number and season if possible.
+--   4. Use the gathered data to attempt to get the items MAL entry.
+--   5. Update the items info with the info from MAL.
+--   6. Show the mapping dialog window.
+-- @class MALBot
+-- @return nil.
+function MALBot:run()
+    -- TODO: Implement this.
+    -- local playlist = vlc.playlist.get("playlist")
+    -- IO:print_r(playlist)
 end

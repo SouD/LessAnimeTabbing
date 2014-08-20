@@ -63,7 +63,7 @@ function define_API()
     -- @param username Username to authenticate.
     -- @param password Password to authenticate.
     -- @return True on success or false on fail.
-    function API:auth(username, password)
+    function API:authenticate(username, password)
         if type(username) ~= "string" or username == "" then
             return false
         end
@@ -78,13 +78,24 @@ function define_API()
 
         if response:status() == 200 then
             self:debug("Authentication successful, welcome " .. username)
+            self._auth = true
             return true
-        elseif response:status() == 204 then
+        elseif response:status() == 204 or response:status() == 401 then
             self:debug("Authentication failed")
+            self._auth = false
             return false
         else
             self:warning("Unexpected HTTP response status code: " .. response:status())
+            self._auth = false
             return false
         end
+    end
+
+    --- Get API auth status.
+    -- Gets the API auth status boolean.
+    -- @class API.
+    -- @return True if authenticated or false otherwise.
+    function API:auth()
+        return self._auth
     end
 end

@@ -63,3 +63,27 @@ function close()
     -- Deactivate for now...
     vlc.deactivate()
 end
+
+--- Input media changed.
+-- Called by VLC when the input media has changed.
+-- This occurs when EOF is reached or the media is stopped or started.
+-- @return nil.
+function input_changed()
+
+end
+
+--- Media meta changed.
+-- Called by VLC when media meta has changed.
+-- This occurs when the playlist is updated or the media meta actually changes.
+-- @return nil.
+function meta_changed()
+
+end
+
+--- Playing media changed.
+-- Called by VLC when the playing media changed.
+-- This occurs when the something triggers a next/prev action.
+-- @return nil.
+function playing_changed()
+
+end

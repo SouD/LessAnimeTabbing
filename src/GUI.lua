@@ -20,7 +20,7 @@
 -- @return nil.
 function define_GUI()
 
-    --- Globally available messages
+    --- Globally available GUI messages
     MSG_GUI_DIALOG_CLOSE_AFTER = "MSG_GUI_DIALOG_CLOSE_AFTER"
     MSG_GUI_DIALOG_CLOSE_BEFORE = "MSG_GUI_DIALOG_CLOSE_BEFORE"
     MSG_GUI_DIALOG_SHOW = "MSG_GUI_DIALOG_SHOW"
