@@ -30,7 +30,8 @@ function define_IO()
     -- @field _prefix Prefix to prepend to all print output.
     IO = inherits(nil)
     -- Match conf dir against drive letter pattern to see if windows or posix
-    if string.match(vlc.config.datadir(), "^(%w:\\).+$") then
+    -- if string.match(vlc.config.datadir(), "^(%w:\\).+$") then
+    if vlc.win then
         IO.OS = "nt"
         IO.DIRECTORY_SEPARATOR = "\\"
     else
@@ -76,6 +77,48 @@ function define_IO()
             return true
         else -- Kuso! No file for you...
             return false, errno
+        end
+    end
+
+    --- Create path.
+    -- Attemts to create everything on the give path. All directories
+    -- missing will be created. If the path ends with a file the file
+    -- will also be created.
+    -- @class IO
+    -- @param path Path to create.
+    -- @return True if path was created or false on error.
+    -- @return Error number on error.
+    function IO:create_path(path)
+        if type(path) ~= "string" then
+            return false
+        end
+
+        if self:file_exists(path) then
+            return true
+        end
+
+        local path, file, extension = string.match(path, "(.-)([^\\/]-%.?([^%.\\/]*))$")
+
+        if not self:dir_exists(path) then
+            local status
+
+            if vlc.win then
+                status = os.execute('mkdir "' .. path ..'"')
+            else
+                status = os.execute("mkdir -p " .. path)
+            end
+
+            self:debug("Executed OS cmd mkdir with status: " .. status)
+
+            if status ~= 0 then
+                return false, status
+            end
+        end
+
+        if file then
+            return self:create_file(path .. file)
+        else
+            return true
         end
     end
 

@@ -21,6 +21,8 @@
 -- since we need instant access to information.
 -- @class MALBot
 -- @field _api Contains an instance of @class API.
+-- @field _config_name Name of config file.
+-- @field _config Contains an instance of @class Config.
 -- @field _gui Contains an instance of @class GUI.
 -- @field info Contains extension information.
 -- @field info.title Extension title.
@@ -33,6 +35,8 @@
 -- @field _publisher Contains an instance of @class Publisher.
 MALBot = {
     _api = nil,
+    _config_name = "MALBot.MALBot",
+    _config = nil,
     _gui = nil,
     info = {
         title = "MALBot",
@@ -52,28 +56,19 @@ MALBot = {
 -- @return nil.
 function MALBot:activate()
 
-    -- Init config
-    if not Config:instance():load() then
-        Config:instance():error("Failed to load config")
-
-        if not Config:instance():loaded() then
-            Config:instance():reset() -- Load defaults into memory
-        end
-    end
-
-    -- Subscribe to messages
+    -- -- Subscribe to messages
     self._publisher = Publisher:new()
     self._publisher:subscribe(MSG_GUI_INPUT_AUTH, function(msg, ...)
         self:auth_input_handler(msg, ...)
     end)
 
-    -- Init members
+    -- -- Init members
+    self._config = Config:new(self._config_name)
     self._api = API:new()
     self._api:prefix("[MALBot API]: ")
-    -- Hey this is almost like dependency injection! Sugoi!
-    self._gui = GUI:new(Publisher:new())
+    self._gui = GUI:new(Publisher:new()) -- Almost like dependency injection! Sugoi!
 
-    local save_credentials = Config:instance():get("save_credentials")
+    local save_credentials = self._config:get("save_credentials")
 
     if not save_credentials then
         self._gui:login()
@@ -87,8 +82,8 @@ end
 -- @class MALBot
 -- @return nil.
 function MALBot:auth()
-    local username = Config:instance():get("username")
-    local password = Config:instance():get("password")
+    local username = self._config:get("username")
+    local password = self._config:get("password")
 
     if self._api:authenticate(username, password) then
         self:run()
@@ -105,9 +100,9 @@ end
 -- @param ... Any other args sent.
 -- @return nil.
 function MALBot:auth_input_handler(msg, ...)
-    Config:instance():set("username", self._gui:get("username"))
-    Config:instance():set("password", self._gui:get("password"))
-    Config:instance():set("save_credentials", self._gui:get("save_credentials"))
+    self._config:set("username", self._gui:get("username"))
+    self._config:set("password", self._gui:get("password"))
+    self._config:set("save_credentials", self._gui:get("save_credentials"))
 
     self._gui:clear_input()
 
@@ -119,7 +114,14 @@ end
 -- @class MALBot
 -- @return nil.
 function MALBot:deactivate()
-    Config:instance():save()
+    local save_credentials = self._config:get("save_credentials")
+
+    if not save_credentials then
+        self._config:set("username", nil)
+        self._config:set("password", nil)
+    end
+
+    self._config:save()
 end
 
 --- Run MALBot.
@@ -135,6 +137,6 @@ end
 -- @return nil.
 function MALBot:run()
     -- TODO: Implement this.
-    -- local playlist = vlc.playlist.get("playlist")
-    -- IO:print_r(playlist)
+    local playlist = vlc.playlist.get("playlist")
+    IO:print_r(playlist)
 end
