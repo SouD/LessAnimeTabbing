@@ -50,9 +50,5 @@ LOCALES.en = {
     RECV_CHARS = "Received %d chars",
     SEND_FAIL = "Failed to send data",
     SENT_CHARS = "Sent %d chars",
-    CONNECTION_FAIL = "Failed to connect to %s:%d",
-
-    MSG_SENT_TO_SUBS = "%s sent to %d subscriber(s)",
-
-    ASSERT_WIN_FAIL = "Windows not supported!"
+    CONNECTION_FAIL = "Failed to connect to %s:%d"
 }

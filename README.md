@@ -28,7 +28,9 @@ across the internet with each request made by MALBot.
 Now with weird object-oriented classes and inheritance!
 
 New working title:
+
 ~~*How to annoy people by obscuring parent classes and alienating children.*~~
+
 *Adding branches and unnecessary stuff because I can. Prepare for localization!!*
 
 Written to the tune of:

@@ -177,8 +177,6 @@ function define_Request()
             end
 
             self:disconnect()
-
-            collectgarbage()
         end
 
         return result
@@ -191,7 +189,9 @@ function define_Request()
     -- @param request Complete HTTP Request to send.
     -- @return Instance of @class Response or nil on error/fail.
     function Request:_posix_execute(request)
-        assert(not vlc.win, "Windows not supported!")
+        if vlc.win then
+            return self:_win_execute(request)
+        end
 
         self:error("_posix_execute not implemented!")
         -- TODO: Implement.
