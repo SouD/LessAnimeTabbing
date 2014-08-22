@@ -31,11 +31,13 @@ function define_GUI()
     -- @class GUI
     -- @field _dialog qt4 dialog userdata object.
     -- @field _input Dialog input table.
+    -- @field _locale Contains an instance of @class Locale.
     -- @field _widgets Table containing active qt4 widgets.
     -- @field _publisher Optional instance of @class Publisher.
     GUI = inherits(nil)
     GUI._dialog = nil
     GUI._input = {}
+    GUI._locale = nil
     GUI._widgets = {}
     GUI._publisher = nil
 
@@ -44,9 +46,11 @@ function define_GUI()
     -- Creates a new instance of @class GUI.
     -- @class GUI
     -- @param publisher Optional instance of @class Publisher.
+    -- @param locale An instance of @class Locale.
     -- @return Instance of @class GUI.
-    function GUI:new(publisher)
+    function GUI:new(publisher, locale)
         return self._new(self, {
+            _locale = locale,
             _publisher = publisher
         })
     end
@@ -133,18 +137,21 @@ function define_GUI()
 
         self._dialog = vlc.dialog(title)
 
-        self._dialog:add_label("MALBot requires your MAL login credentials to continue.", 1, 1, 6, 1)
+        self._dialog:add_label(self._locale:get("LOGIN_LABEL"), 1, 1, 6, 1)
 
-        self._dialog:add_label("Username:", 1, 2, 2, 1)
+        self._dialog:add_label(self._locale:get("USERNAME"), 1, 2, 2, 1)
         self._widgets["username"] = self._dialog:add_text_input("", 3, 2, 4, 1)
 
-        self._dialog:add_label("Password:", 1, 3, 2, 1)
+        self._dialog:add_label(self._locale:get("PASSWORD"), 1, 3, 2, 1)
         self._widgets["password"] = self._dialog:add_password("", 3, 3, 4, 1)
 
-        self._widgets["save_credentials"] = self._dialog:add_check_box("Remember me", false, 3, 4, 4, 1)
+        self._widgets["save_credentials"] = self._dialog:add_check_box(
+            self._locale:get("REMEMBER_ME"), false, 3, 4, 4, 1)
 
-        self._dialog:add_button("Authorize", auth_button_on_click, 3, 5, 2, 1)
-        self._dialog:add_button("Cancel", vlc.deactivate, 5, 5, 2, 1)
+        self._dialog:add_button(self._locale:get("AUTHORIZE"),
+            auth_button_on_click, 3, 5, 2, 1)
+        self._dialog:add_button(self._locale:get("CANCEL"),
+            vlc.deactivate, 5, 5, 2, 1)
 
         -- Tell our sweet subs that something is showing! =(^_^)=
         self:_publish(MSG_GUI_DIALOG_SHOW, title)

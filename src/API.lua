@@ -49,6 +49,7 @@ function define_API()
     -- @field ANIME_UPDATE Update anime list entry path.
     -- @field ANIME_DELETE Delete anime from list path.
     -- @field _auth Authentication status boolean.
+    -- @field _locale Contains an instance of @class Locale.
     API = inherits(IO)
     API.HOST = "myanimelist.net"
     API.VERIFY_CREDENTIALS = "/api/account/verify_credentials.xml" -- GET
@@ -57,6 +58,19 @@ function define_API()
     API.ANIME_UPDATE = "/api/animelist/update/%d.xml" -- POST, req auth
     API.ANIME_DELETE = "/api/animelist/delete/%d.xml" -- POST|DELETE, req auth
     API._auth = false
+    API._locale = nil
+
+    API._new = API.new
+    --- API constructor.
+    -- @class API
+    -- @param locale An instance of @class Locale.
+    -- @return Instance of @class API.
+    function API:new(locale)
+        return self._new(self, {
+            _locale = locale,
+            _prefix = "[MALBot API]: "
+        })
+    end
 
     --- Authenticate user credentials.
     -- Attempts to authenticate input user credentials against MAL's API.
@@ -72,20 +86,22 @@ function define_API()
             return false
         end
 
-        local request = Request:new(Request.GET, self.VERIFY_CREDENTIALS, self.HOST, nil, nil)
+        local request = Request:new(Request.GET, self.VERIFY_CREDENTIALS,
+            self.HOST, nil, nil)
         request:add_basic_auth(username, password)
         local response = request:execute()
 
         if response:status() == 200 then
-            self:debug("Authentication successful, welcome " .. username)
+            self:debug(string.format(self._locale:get("AUTH_SUCCESS"), username))
             self._auth = true
             return true
         elseif response:status() == 204 or response:status() == 401 then
-            self:debug("Authentication failed")
+            self:debug(self._locale:get("AUTH_FAIL"))
             self._auth = false
             return false
         else
-            self:warning("Unexpected HTTP response status code: " .. response:status())
+            self:warning(string.format(self._locale:get("AUTH_UNEXPECTED_CODE"),
+                response:status()))
             self._auth = false
             return false
         end

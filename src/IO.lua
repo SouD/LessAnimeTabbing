@@ -53,7 +53,7 @@ function define_IO()
         end
 
         local status = os.execute('mkdir "' .. path ..'"')
-        self:debug("Executed OS cmd mkdir with status: " .. status)
+        -- self:debug("Executed OS cmd mkdir with status: " .. status)
 
         return status
     end

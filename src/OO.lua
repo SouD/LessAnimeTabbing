@@ -24,7 +24,7 @@ function oo()
     if classes and #classes > 0 then
         for i = 1, #classes do
             local init_func = "define_" .. classes[i]
-            vlc.msg.dbg(string.format("%s Invoking %s", os.date("%H:%M:%S"), init_func))
+            vlc.msg.dbg(string.format("%s Loaded class %s", os.date("%H:%M:%S"), classes[i]))
             _G[init_func]()
         end
     end

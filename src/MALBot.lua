@@ -62,11 +62,11 @@ function MALBot:activate()
         self:auth_input_handler(msg, ...)
     end)
 
-    -- -- Init members
-    self._config = Config:new(self._config_name)
-    self._api = API:new()
-    self._api:prefix("[MALBot API]: ")
-    self._gui = GUI:new(Publisher:new()) -- Almost like dependency injection! Sugoi!
+    -- Init members
+    self._config = Config:new(self._config_name, Locale:new())
+    self._api = API:new(Locale:new())
+    self._gui = GUI:new(Publisher:new(), Locale:new())
+    -- Almost like dependency injection! Sugoi!
 
     local save_credentials = self._config:get("save_credentials")
 
@@ -137,6 +137,15 @@ end
 -- @return nil.
 function MALBot:run()
     -- TODO: Implement this.
-    local playlist = vlc.playlist.get("playlist")
-    IO:print_r(playlist)
+    -- local playlist = vlc.playlist.get("playlist")
+    -- IO:print_r(playlist)
+    -- local os_lang = os.getenv("LANG")
+
+    -- if os_lang then -- unix, mac
+    --     os_lang = string.sub(os_lang, 0, 2)
+    --     IO:print_r(os_lang)
+    -- else -- Windows
+    --     local lang_w = string.match(os.setlocale("", "collate"), "^[^_]+")
+    --     IO:print_r(lang_w)
+    -- end
 end

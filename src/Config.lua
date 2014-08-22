@@ -23,20 +23,29 @@ function define_Config()
     -- Configuration handling class. Inherits IO.
     -- @class Config
     -- @field EXTENSION Config file extension constant.
+    -- @field _locale Contains an instance of @class Locale.
     -- @field _name Config name.
     -- @field _path Config file path.
     -- @field _loaded Config loaded status.
     -- @field _values Configuration key value store.
     Config = inherits(IO)
     Config.EXTENSION = ".properties"
+    Config._locale = nil
     Config._name = nil
     Config._path = nil
     Config._loaded = false
     Config._values = {}
 
     Config._new = Config.new
-    function Config:new(config)
+    --- Config constructor.
+    -- Creates a new instance of @class Config.
+    -- @class Config
+    -- @param config Name of config to load.
+    -- @param locale An instance of @class Locale.
+    -- @return Instance of @class Config.
+    function Config:new(config, locale)
         local c = self._new(self, {
+            _locale = locale,
             _name = config,
             _prefix = "[MALBot Config]: "
         })
@@ -75,7 +84,7 @@ function define_Config()
         end
 
         if type(config) ~= "string" or string.len(config) < 1 then
-            self:error("Invalid argument 1 to method Config:load()")
+            self:error(self._locale:get("CONF_LOAD_INVALID_ARG"))
             return false
         end
 
@@ -87,20 +96,20 @@ function define_Config()
         elseif #tree == 1 then
             self._path = path .. tree[1] .. self.EXTENSION
         else
-            self:error("Failed to parse config path " .. config)
+            self:error(string.format(self._locale:get("CONF_PARSE_FAIL"), config))
             return false
         end
 
         if not self:file_exists(self._path) then
             if create then
                 if self:create_path(self._path) then
-                    self:debug("Created config " .. self._path)
+                    self:debug(string.format(self._locale:get("CONF_CREATE_SUCCESS"), self._path))
                 else
-                    self:error("Failed to create config " .. self._path)
+                    self:error(string.format(self._locale:get("CONF_CREATE_FAIL"), self._path))
                     return false
                 end
             else
-                self:error("Config not found on path " .. self._path)
+                self:error(string.format(self._locale:get("CONF_NOT_FOUND"), self._path))
                 return false
             end
         end
@@ -108,7 +117,7 @@ function define_Config()
         local file, _, errno = io.open(self._path, "r")
 
         if not file then
-            self:error("Failed to open config, errno " .. errno)
+            self:error(string.format(self._locale:get("CONF_OPEN_FAIL"), errno))
             return false
         end
 
@@ -135,7 +144,7 @@ function define_Config()
             end
         end
 
-        self:debug("Loaded config " .. self._name .. " from " .. self._path)
+        self:debug(string.format(self._locale:get("CONF_LOAD_SUCCESS"), self._name, self._path))
 
         self._loaded = true
 
@@ -161,7 +170,7 @@ function define_Config()
                 self._values = {}
                 self._loaded = false
 
-                self:debug("Resetting config " .. self._name)
+                self:debug(string.format(self._locale:get("CONF_RESET"), self._name))
 
                 return self:load(self._name)
             else
@@ -185,7 +194,7 @@ function define_Config()
 
         if not self:file_exists(self._path) then
             if not self:create_path(self._path) then
-                self:error("Failed to create config " .. self._path)
+                self:error(string.format(self._locale:get("CONF_CREATE_FAIL"), self._path))
                 return false
             end
         end
@@ -193,11 +202,11 @@ function define_Config()
         local file, _, errno = io.open(self._path, "w+") -- Change to w later
 
         if not file then
-            self:error("Failed to open config: " .. errno)
+            self:error(string.format(self._locale:get("CONF_OPEN_FAIL"), errno))
             return false, errno
         end
 
-        local line = "# Last modified: " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n"
+        local line = string.format(self._locale:get("CONF_LAST_MODIFIED"), os.date("%Y-%m-%d %H:%M:%S"))
 
         file:write(line)
 
@@ -212,7 +221,7 @@ function define_Config()
         file:flush()
         file:close()
 
-        self:debug("Saved config " .. self._name .. " to " .. self._path)
+        self:debug(string.format(self._locale:get("CONF_SAVED"), self._name, self._path))
 
         return true
     end

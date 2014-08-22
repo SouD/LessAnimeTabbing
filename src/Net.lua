@@ -37,7 +37,8 @@ function define_Net()
     -- @param port Port to connect on.
     -- @return True if connection was successful or false on error.
     function Net:connect(host, port)
-        assert(vlc.net, "Namespace vlc.net not available!")
+        local l = Locale:new()
+        assert(vlc.net, l:get("ASSERT_VLC_NET_FAIL"))
 
         if self._connected then
             self:disconnect()
@@ -55,7 +56,7 @@ function define_Net()
         self._connection = vlc.net.connect_tcp(host, port)
 
         if self._connection == -1 then
-            self:error("Failed to connect to " .. host .. ":" .. port)
+            self:error(string.format(l:get("CONNECTION_FAIL"), host, port))
             self._connected = false
         else
             self._connected = true
@@ -69,7 +70,8 @@ function define_Net()
     -- @class Net
     -- @return True if disconnected or false on error.
     function Net:disconnect()
-        assert(vlc.net, "Namespace vlc.net not available!")
+        local l = Locale:new()
+        assert(vlc.net, l:get("ASSERT_VLC_NET_FAIL"))
 
         if self._connection == -1 then
             return false
@@ -91,7 +93,8 @@ function define_Net()
     -- @class Net
     -- @return Response from connection or false on error or nil if no response (socket not ready).
     function Net:recv(size)
-        assert(vlc.net, "Namespace vlc.net not available!")
+        local l = Locale:new()
+        assert(vlc.net, l:get("ASSERT_VLC_NET_FAIL"))
 
         if not self._connected then
             return false
@@ -104,7 +107,7 @@ function define_Net()
         local response = vlc.net.recv(self._connection, size)
 
         if response then
-            self:debug(string.format("Received %d chars", string.len(response)))
+            self:debug(string.format(l:get("RECV_CHARS"), string.len(response)))
         end
 
         return response -- Can be nil or string
@@ -118,7 +121,8 @@ function define_Net()
     -- @return True on success or false on error.
     -- @return Amount of chars sent if successful.
     function Net:send(data)
-        assert(vlc.net, "Namespace vlc.net not available!")
+        local l = Locale:new()
+        assert(vlc.net, l:get("ASSERT_VLC_NET_FAIL"))
 
         if not self._connected then
             return false
@@ -132,10 +136,10 @@ function define_Net()
         local result = vlc.net.send(self._connection, data)
 
         if result == -1 then
-            self:error("Failed to send data")
+            self:error(l:get("SEND_FAIL"))
             return false
         else
-            self:debug(string.format("Sent %d chars", result))
+            self:debug(string.format(l:get("SENT_CHARS"), result))
             return true, result
         end
     end

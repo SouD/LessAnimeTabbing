@@ -4,9 +4,9 @@ A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
 
 ###TODO
 
-1. Finish Request and Response classes.
-2. Create input and playlist classes.
-3. ????
+1. Create input and playlist classes.
+2. Cleanup localization.
+3. Create mapping dialog.
 4. Write a better readme.
 
 ###DISCLAIMER
@@ -28,7 +28,8 @@ across the internet with each request made by MALBot.
 Now with weird object-oriented classes and inheritance!
 
 New working title:
-*How to annoy people by obscuring parent classes and alienating children.*
+~~*How to annoy people by obscuring parent classes and alienating children.*~~
+*Adding branches and unnecessary stuff because I can. Prepare for localization!!*
 
 Written to the tune of:
 - Highschool of the Dead - Kishida Kyōdan ft. Akeboshi Rockets.
@@ -36,3 +37,6 @@ Written to the tune of:
 - Ala Mode - Mindless Self Indulgence.
 - Evening Wear - Mindless Self Indulgence.
 - Bass Slut X-FIR3 Remix - S3RL.
+- Evening Wear - Mindless Self Indulgence.
+- Sugar Sweet Nightmare - Yui Horie.
+- Kimi no Shiranai Monogatari - Supercell.

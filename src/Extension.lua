@@ -24,6 +24,7 @@
 -- if a class attempts to inherit another class which
 -- hasn't been loaded.
 local classes = {
+    "Locale",
     "Publisher",
     "IO",
     "Config",
