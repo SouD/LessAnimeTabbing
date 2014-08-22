@@ -35,14 +35,14 @@
 -- end
 
 
---- Defines the API class.
+--- Defines the MAL class.
 -- @return nil.
-function define_API()
+function define_MAL()
 
-    --- myanimelist.net API class.
+    --- myanimelist.net MAL class.
     -- Contains methods to handle interfacing with MAL's public API.
-    -- @class API
-    -- @field HOST API host.
+    -- @class MAL
+    -- @field HOST MAL host.
     -- @field VERIFY_CREDENTIALS Authentication path.
     -- @field ANIME_SEARCH Search for anime path.
     -- @field ANIME_ADD Add anime to list path.
@@ -50,25 +50,25 @@ function define_API()
     -- @field ANIME_DELETE Delete anime from list path.
     -- @field _auth Authentication status boolean.
     -- @field _locale Contains an instance of @class Locale.
-    API = inherits(IO)
-    API.HOST = "myanimelist.net"
-    API.VERIFY_CREDENTIALS = "/api/account/verify_credentials.xml" -- GET
-    API.ANIME_SEARCH = "/api/anime/search.xml?q=%s" -- GET, req auth
-    API.ANIME_ADD = "/api/animelist/add/%d.xml" -- POST, req auth
-    API.ANIME_UPDATE = "/api/animelist/update/%d.xml" -- POST, req auth
-    API.ANIME_DELETE = "/api/animelist/delete/%d.xml" -- POST|DELETE, req auth
-    API._auth = false
-    API._locale = nil
+    MAL = inherits(IO)
+    MAL.HOST = "myanimelist.net"
+    MAL.VERIFY_CREDENTIALS = "/api/account/verify_credentials.xml" -- GET
+    MAL.ANIME_SEARCH = "/api/anime/search.xml?q=%s" -- GET, req auth
+    MAL.ANIME_ADD = "/api/animelist/add/%d.xml" -- POST, req auth
+    MAL.ANIME_UPDATE = "/api/animelist/update/%d.xml" -- POST, req auth
+    MAL.ANIME_DELETE = "/api/animelist/delete/%d.xml" -- POST|DELETE, req auth
+    MAL._auth = false
+    MAL._locale = nil
 
-    API._new = API.new
-    --- API constructor.
-    -- @class API
+    MAL._new = MAL.new
+    --- MAL constructor.
+    -- @class MAL
     -- @param locale An instance of @class Locale.
-    -- @return Instance of @class API.
-    function API:new(locale)
+    -- @return Instance of @class MAL.
+    function MAL:new(locale)
         return self._new(self, {
             _locale = locale,
-            _prefix = "[MALBot API]: "
+            _prefix = "[MALBot MAL]: "
         })
     end
 
@@ -77,7 +77,7 @@ function define_API()
     -- @param username Username to authenticate.
     -- @param password Password to authenticate.
     -- @return True on success or false on fail.
-    function API:authenticate(username, password)
+    function MAL:authenticate(username, password)
         if type(username) ~= "string" or username == "" then
             return false
         end
@@ -107,11 +107,11 @@ function define_API()
         end
     end
 
-    --- Get API auth status.
-    -- Gets the API auth status boolean.
-    -- @class API.
+    --- Get MAL auth status.
+    -- Gets the MAL auth status boolean.
+    -- @class MAL.
     -- @return True if authenticated or false otherwise.
-    function API:auth()
+    function MAL:auth()
         return self._auth
     end
 end

@@ -20,7 +20,7 @@
 -- The main class of the extension. Not defined within a define_ OO function
 -- since we need instant access to information.
 -- @class MALBot
--- @field _api Contains an instance of @class API.
+-- @field _mal Contains an instance of @class MAL.
 -- @field _config_name Name of config file.
 -- @field _config Contains an instance of @class Config.
 -- @field _gui Contains an instance of @class GUI.
@@ -34,7 +34,7 @@
 -- @field info.capabilities Extension capabilities like menu, input and meta.
 -- @field _publisher Contains an instance of @class Publisher.
 MALBot = {
-    _api = nil,
+    _mal = nil,
     _config_name = "MALBot.MALBot",
     _config = nil,
     _gui = nil,
@@ -64,7 +64,7 @@ function MALBot:activate()
 
     -- Init members
     self._config = Config:new(self._config_name, Locale:new())
-    self._api = API:new(Locale:new())
+    self._mal = MAL:new(Locale:new())
     self._gui = GUI:new(Publisher:new(), Locale:new())
     -- Almost like dependency injection! Sugoi!
 
@@ -85,7 +85,7 @@ function MALBot:auth()
     local username = self._config:get("username")
     local password = self._config:get("password")
 
-    if self._api:authenticate(username, password) then
+    if self._mal:authenticate(username, password) then
         self:run()
     else -- Show login dialog on fail
         self._gui:login()
@@ -137,15 +137,4 @@ end
 -- @return nil.
 function MALBot:run()
     -- TODO: Implement this.
-    -- local playlist = vlc.playlist.get("playlist")
-    -- IO:print_r(playlist)
-    -- local os_lang = os.getenv("LANG")
-
-    -- if os_lang then -- unix, mac
-    --     os_lang = string.sub(os_lang, 0, 2)
-    --     IO:print_r(os_lang)
-    -- else -- Windows
-    --     local lang_w = string.match(os.setlocale("", "collate"), "^[^_]+")
-    --     IO:print_r(lang_w)
-    -- end
 end
