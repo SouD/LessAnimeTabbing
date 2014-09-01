@@ -25,13 +25,14 @@
 -- hasn't been loaded.
 local classes = {
     "Locale",
+    "Anime",
     "Publisher",
     "IO",
     "Config",
     "Net",
     "Response",
     "Request",
-    "API",
+    "MAL",
     "GUI"
 }
 

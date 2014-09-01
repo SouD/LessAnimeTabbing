@@ -42,3 +42,7 @@ Written to the tune of:
 - Evening Wear - Mindless Self Indulgence.
 - Sugar Sweet Nightmare - Yui Horie.
 - Kimi no Shiranai Monogatari - Supercell.
+- Absolute Territory - Ken Ashcorp.
+- Touch Fluffy Tail - Ken Ashcorp.
+- Vectors - Area 11.
+- おちゃめ機能 - ろん。 (Ochame Kinō - Ron)

@@ -32,6 +32,7 @@
 -- @field info.shortdesc Short extension description.
 -- @field info.description Extension description.
 -- @field info.capabilities Extension capabilities like menu, input and meta.
+-- @field _publisher Contains an instance of @class Locale.
 -- @field _publisher Contains an instance of @class Publisher.
 MALBot = {
     _mal = nil,
@@ -47,6 +48,7 @@ MALBot = {
         description = "TODO: Write description here.",
         capabilities = {}
     },
+    _locale = nil,
     _publisher = nil
 }
 
@@ -63,9 +65,10 @@ function MALBot:activate()
     end)
 
     -- Init members
-    self._config = Config:new(self._config_name, Locale:new())
-    self._mal = MAL:new(Locale:new())
-    self._gui = GUI:new(Publisher:new(), Locale:new())
+    self._locale = Locale:new()
+    self._config = Config:new(self._config_name, self._locale)
+    self._mal = MAL:new(self._locale)
+    self._gui = GUI:new(self._publisher, self._locale)
     -- Almost like dependency injection! Sugoi!
 
     local save_credentials = self._config:get("save_credentials")
@@ -136,5 +139,19 @@ end
 -- @class MALBot
 -- @return nil.
 function MALBot:run()
-    -- TODO: Implement this.
+    local playlist = vlc.playlist.get("playlist")
+    local children = playlist.children
+    local anime_list = {}
+
+    if #children > 0 then
+        for _, item in ipairs(children) do
+            table.insert(anime_list, Anime:new(item))
+        end
+
+        IO:print_r(anime_list)
+
+        -- show gui dialog with list of animes and their best sugg
+    else
+        self._gui:alert(self._locale:get("PLAYLIST_EMPTY"))
+    end
 end

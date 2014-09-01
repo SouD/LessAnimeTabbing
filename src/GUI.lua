@@ -68,6 +68,32 @@ function define_GUI()
         end
     end
 
+    --- Display an alert.
+    -- Create and display an alert dialog window. The dialog
+    -- will show the given message as a label with a simple okay
+    -- button to close the dialog.
+    -- @class GUI
+    -- @param msg Message to show.
+    -- @param title Title on window.
+    -- @return nil.
+    function GUI:alert(msg, title)
+        self:close()
+
+        if not msg or type(msg) ~= "string" or string.len(msg) < 1 then
+            msg = self._locale:get("NO_MESSAGE")
+        end
+
+        if not title or type(title) ~= "string" or string.len(title) < 1 then
+            title = self._locale:get("INFO")
+        end
+
+        self._dialog = vlc.dialog(title)
+
+        self._dialog:add_label(msg, 1, 1, 4, 4)
+        self._dialog:add_button(self._locale:get("OKAY"),
+            function() self:close() end, 1, 5, 2, 1)
+    end
+
     --- Clears input table.
     -- Clears all user input data from @field _input.
     -- @class GUI

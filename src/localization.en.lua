@@ -27,7 +27,6 @@ LOCALES.en = {
     AUTH_SUCCESS = "Authentication successful, welcome %s",
     AUTH_FAIL = "Authentication failed",
     AUTH_UNEXPECTED_CODE = "Unexpected HTTP response status code %d",
-
     CONF_LOAD_INVALID_ARG = "Invalid argument 1 to method Config:load()",
     CONF_PARSE_FAIL = "Failed to parse config name %s",
     CONF_CREATE_SUCCESS = "Created config %s",
@@ -38,17 +37,19 @@ LOCALES.en = {
     CONF_RESET = "Resetting config %s",
     CONF_LAST_MODIFIED = "# Last modified: %s \n",
     CONF_SAVED = "Saved config %s to %s",
-
     LOGIN_LABEL = "MALBot requires your MAL login credentials to continue.",
     USERNAME = "Username:",
     PASSWORD = "Password:",
     REMEMBER_ME = "Remember me",
     AUTHORIZE = "Authorize",
     CANCEL = "Cancel",
-
     ASSERT_VLC_NET_FAIL = "Namespace vlc.net not available!",
     RECV_CHARS = "Received %d chars",
     SEND_FAIL = "Failed to send data",
     SENT_CHARS = "Sent %d chars",
-    CONNECTION_FAIL = "Failed to connect to %s:%d"
+    CONNECTION_FAIL = "Failed to connect to %s:%d",
+    NO_MESSAGE = "No message.",
+    INFO = "Info",
+    OKAY = "Okay",
+    PLAYLIST_EMPTY = "The playlist is empty."
 }
