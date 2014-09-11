@@ -26,6 +26,7 @@
 local classes = {
     "Locale",
     "Anime",
+    "List",
     "Publisher",
     "IO",
     "Config",

@@ -20,7 +20,7 @@
 -- The main class of the extension. Not defined within a define_ OO function
 -- since we need instant access to information.
 -- @class MALBot
--- @field _mal Contains an instance of @class MAL.
+-- @field _anime_list TBW.
 -- @field _config_name Name of config file.
 -- @field _config Contains an instance of @class Config.
 -- @field _gui Contains an instance of @class GUI.
@@ -32,10 +32,11 @@
 -- @field info.shortdesc Short extension description.
 -- @field info.description Extension description.
 -- @field info.capabilities Extension capabilities like menu, input and meta.
--- @field _publisher Contains an instance of @class Locale.
+-- @field _locale Contains an instance of @class Locale.
+-- @field _mal Contains an instance of @class MAL.
 -- @field _publisher Contains an instance of @class Publisher.
 MALBot = {
-    _mal = nil,
+    _anime_list = {},
     _config_name = "MALBot.MALBot",
     _config = nil,
     _gui = nil,
@@ -49,6 +50,7 @@ MALBot = {
         capabilities = {}
     },
     _locale = nil,
+    _mal = nil,
     _publisher = nil
 }
 
@@ -139,18 +141,23 @@ end
 -- @class MALBot
 -- @return nil.
 function MALBot:run()
+    self:update_anime_list()
+
+    if #self._anime_list > 0 then
+        self._gui:map_anime(self._anime_list)
+    end
+end
+
+function MALBot:update_anime_list()
     local playlist = vlc.playlist.get("playlist")
     local children = playlist.children
-    local anime_list = {}
 
     if #children > 0 then
-        for _, item in ipairs(children) do
-            table.insert(anime_list, Anime:new(item))
+        for i, item in ipairs(children) do
+            if not self._anime_list[i] or item.name ~= self._anime_list[i]:raw_name() then
+                self._anime_list[i] = Anime:new(item)
+            end
         end
-
-        IO:print_r(anime_list)
-
-        -- show gui dialog with list of animes and their best sugg
     else
         self._gui:alert(self._locale:get("PLAYLIST_EMPTY"))
     end

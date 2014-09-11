@@ -37,6 +37,7 @@ LOCALES.en = {
     CONF_RESET = "Resetting config %s",
     CONF_LAST_MODIFIED = "# Last modified: %s \n",
     CONF_SAVED = "Saved config %s to %s",
+    LOGIN = "Login",
     LOGIN_LABEL = "MALBot requires your MAL login credentials to continue.",
     USERNAME = "Username:",
     PASSWORD = "Password:",
@@ -51,5 +52,6 @@ LOCALES.en = {
     NO_MESSAGE = "No message.",
     INFO = "Info",
     OKAY = "Okay",
-    PLAYLIST_EMPTY = "The playlist is empty."
+    PLAYLIST_EMPTY = "The playlist is empty.",
+    MAP_ANIME = "Map anime"
 }

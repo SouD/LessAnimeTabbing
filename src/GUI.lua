@@ -15,15 +15,13 @@
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+-- col row width height
 
 --- Defines the GUI class.
 -- @return nil.
 function define_GUI()
 
     --- Globally available GUI messages
-    MSG_GUI_DIALOG_CLOSE_AFTER = "MSG_GUI_DIALOG_CLOSE_AFTER"
-    MSG_GUI_DIALOG_CLOSE_BEFORE = "MSG_GUI_DIALOG_CLOSE_BEFORE"
-    MSG_GUI_DIALOG_SHOW = "MSG_GUI_DIALOG_SHOW"
     MSG_GUI_INPUT_AUTH = "MSG_GUI_INPUT_AUTH"
 
     --- GUI class.
@@ -110,8 +108,6 @@ function define_GUI()
     -- @return nil.
     function GUI:close()
         if self._dialog ~= nil then
-            self:_publish(MSG_GUI_DIALOG_CLOSE_BEFORE)
-
             self._dialog:hide()
 
             for k, _ in pairs(self._widgets) do
@@ -122,8 +118,6 @@ function define_GUI()
             self._dialog = nil
 
             collectgarbage()
-
-            self:_publish(MSG_GUI_DIALOG_CLOSE_AFTER)
         end
     end
 
@@ -143,7 +137,7 @@ function define_GUI()
     function GUI:login()
         self:close()
 
-        local title = "Login"
+        local title = self._locale:get("LOGIN")
         local function auth_button_on_click()
             local username = self._widgets["username"]:get_text()
             local password = self._widgets["password"]:get_text()
@@ -178,9 +172,27 @@ function define_GUI()
             auth_button_on_click, 3, 5, 2, 1)
         self._dialog:add_button(self._locale:get("CANCEL"),
             vlc.deactivate, 5, 5, 2, 1)
+    end
 
-        -- Tell our sweet subs that something is showing! =(^_^)=
-        self:_publish(MSG_GUI_DIALOG_SHOW, title)
+    function GUI:map_anime(list)
+        self:close()
+
+        if type(list) ~= "table" or #list < 1 then
+            return false
+        end
+
+        local title = self._locale:get("MAP_ANIME")
+
+        self._dialog = vlc.dialog(title)
+
+        local row = 1
+        for i = 1, #list do
+            self._dialog:add_label(list[i]:name(), 1, i, 4, 1)
+            row = i
+        end
+
+        self._dialog:add_button(self._locale:get("OKAY"),
+            function() self:close() end, 1, row + 1, 2, 1)
     end
 
     --- Get publisher.
