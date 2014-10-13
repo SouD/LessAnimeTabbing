@@ -1,25 +1,11 @@
-##MALBot
+##LessAnimeTabbing
 
-A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
-
-###TODO
-
-1. Create input and playlist classes.
-2. Cleanup localization.
-3. Create mapping dialog.
-4. Write a better readme.
+LessAnimeTabbing. Keep track of your anime without tabbing!
+TODO.
 
 ###DISCLAIMER
 
-I am not in any way associated with myanimelist.net (henceforth known
-as *MAL*) or the creators/maintainers of *MAL*. I am simply a *MAL* user.
-This extension is not an official extension created by MAL. I will not
-be held accountible for any loss, material or otherwise, due to usage
-of this extension. Passwords and usernames are stored in plaintext due
-to technical limitations so please keep this in mind. *MAL's* API does
-currently not support HTTPS request or SSL connections so also bear in
-mind that your username and password will be transmitted in plaintext
-across the internet with each request made by MALBot.
+TODO.
 
 **Use at your own discretion!**
 
@@ -27,11 +13,7 @@ across the internet with each request made by MALBot.
 
 Now with weird object-oriented classes and inheritance!
 
-New working title:
-
-~~*How to annoy people by obscuring parent classes and alienating children.*~~
-
-*Adding branches and unnecessary stuff because I can. Prepare for localization!!*
+Working title: Strawberry Uranium.
 
 Written to the tune of:
 - Highschool of the Dead - Kishida Kyōdan ft. Akeboshi Rockets.
@@ -46,3 +28,6 @@ Written to the tune of:
 - Touch Fluffy Tail - Ken Ashcorp.
 - Vectors - Area 11.
 - おちゃめ機能 - ろん。 (Ochame Kinō - Ron)
+- Salvage - Team Nekokan
+- Inside Identity - Black Raison d'être
+- Watashi ga Motenai no wa dō Kangaetemo Omaera ga Warui! - Suzuki Konomi, Kiba of Akiba
