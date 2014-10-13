@@ -1,4 +1,4 @@
--- A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
+-- LessAnimeTabbing. Keep track of your anime without tabbing!
 -- Copyright (C) 2014  Linus Sörensen
 
 -- This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ function define_Config()
     Config._name = nil
     Config._path = nil
     Config._loaded = false
-    Config._values = {}
+    Config._values = nil
 
     Config._new = Config.new
     --- Config constructor.
@@ -47,7 +47,8 @@ function define_Config()
         local c = self._new(self, {
             _locale = locale,
             _name = config,
-            _prefix = "[MALBot Config]: "
+            _prefix = "[MALBot Config]: ",
+            _values = {}
         })
 
         c:load(config, true)

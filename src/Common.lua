@@ -55,3 +55,19 @@ function table_shallow_copy(t)
 
     return t2
 end
+
+--- URL encode a string.
+-- Source: http://lua-users.org/wiki/StringRecipes
+-- @param str String to encode.
+-- @return Encoded string or nil.
+function url_encode(str)
+    if type(str) == "string" then
+        str = string.gsub(str, "\n", "\r\n")
+        str = string.gsub(str, "([^%w %-%_%.%~])", function (c)
+            return string.format("%%%02X", string.byte(c))
+        end)
+        str = string.gsub(str, " ", "+")
+
+        return str
+    end
+end

@@ -1,4 +1,4 @@
--- A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
+-- LessAnimeTabbing. Keep track of your anime without tabbing!
 -- Copyright (C) 2014  Linus Sörensen
 
 -- This program is free software; you can redistribute it and/or
@@ -25,23 +25,21 @@
 -- hasn't been loaded.
 local classes = {
     "Locale",
-    "Anime",
-    "List",
-    "Publisher",
     "IO",
+    "Publisher",
     "Config",
     "Net",
     "Response",
     "Request",
-    "MAL",
+    "Anime",
     "GUI"
 }
 
 --- Get extension description.
--- Fetches extension information from the MALBot class.
+-- Fetches extension information from the LessAnimeTabbing class.
 -- @return A table with all the extension information.
 function descriptor()
-    return MALBot.info
+    return LessAnimeTabbing.info
 end
 
 --- Activate the extension.
@@ -49,14 +47,14 @@ end
 -- @return nil.
 function activate()
     oo() -- Define classes
-    MALBot:activate()
+    LessAnimeTabbing:activate()
 end
 
 --- Deactivate the extension.
 -- Called when extension is deactivated by the user, extension or VLC.
 -- @return nil.
 function deactivate()
-    MALBot:deactivate()
+    LessAnimeTabbing:deactivate()
 end
 
 --- Close extension dialog.

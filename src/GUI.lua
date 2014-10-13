@@ -1,4 +1,4 @@
--- A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
+-- LessAnimeTabbing. Keep track of your anime without tabbing!
 -- Copyright (C) 2014  Linus Sörensen
 
 -- This program is free software; you can redistribute it and/or
@@ -20,9 +20,6 @@
 --- Defines the GUI class.
 -- @return nil.
 function define_GUI()
-
-    --- Globally available GUI messages
-    MSG_GUI_INPUT_AUTH = "MSG_GUI_INPUT_AUTH"
 
     --- GUI class.
     -- Contains methods to handle the VLC qt4 interface.
@@ -66,32 +63,6 @@ function define_GUI()
         end
     end
 
-    --- Display an alert.
-    -- Create and display an alert dialog window. The dialog
-    -- will show the given message as a label with a simple okay
-    -- button to close the dialog.
-    -- @class GUI
-    -- @param msg Message to show.
-    -- @param title Title on window.
-    -- @return nil.
-    function GUI:alert(msg, title)
-        self:close()
-
-        if not msg or type(msg) ~= "string" or string.len(msg) < 1 then
-            msg = self._locale:get("NO_MESSAGE")
-        end
-
-        if not title or type(title) ~= "string" or string.len(title) < 1 then
-            title = self._locale:get("INFO")
-        end
-
-        self._dialog = vlc.dialog(title)
-
-        self._dialog:add_label(msg, 1, 1, 4, 4)
-        self._dialog:add_button(self._locale:get("OKAY"),
-            function() self:close() end, 1, 5, 2, 1)
-    end
-
     --- Clears input table.
     -- Clears all user input data from @field _input.
     -- @class GUI
@@ -128,71 +99,6 @@ function define_GUI()
     -- @return Value matching key or nil.
     function GUI:get(key)
         return self._input[key]
-    end
-
-    --- Show the login dialog.
-    -- Setup and show the login dialog.
-    -- @class GUI
-    -- @return nil.
-    function GUI:login()
-        self:close()
-
-        local title = self._locale:get("LOGIN")
-        local function auth_button_on_click()
-            local username = self._widgets["username"]:get_text()
-            local password = self._widgets["password"]:get_text()
-            local save_credentials = self._widgets["save_credentials"]:get_checked()
-
-            if username ~= "" and password ~= "" then
-                self._input["username"] = username
-                self._input["password"] = password
-                self._input["save_credentials"] = save_credentials
-
-                self:close()
-
-                -- Tell subs that user input auth data
-                self:_publish(MSG_GUI_INPUT_AUTH)
-            end
-        end
-
-        self._dialog = vlc.dialog(title)
-
-        self._dialog:add_label(self._locale:get("LOGIN_LABEL"), 1, 1, 6, 1)
-
-        self._dialog:add_label(self._locale:get("USERNAME"), 1, 2, 2, 1)
-        self._widgets["username"] = self._dialog:add_text_input("", 3, 2, 4, 1)
-
-        self._dialog:add_label(self._locale:get("PASSWORD"), 1, 3, 2, 1)
-        self._widgets["password"] = self._dialog:add_password("", 3, 3, 4, 1)
-
-        self._widgets["save_credentials"] = self._dialog:add_check_box(
-            self._locale:get("REMEMBER_ME"), false, 3, 4, 4, 1)
-
-        self._dialog:add_button(self._locale:get("AUTHORIZE"),
-            auth_button_on_click, 3, 5, 2, 1)
-        self._dialog:add_button(self._locale:get("CANCEL"),
-            vlc.deactivate, 5, 5, 2, 1)
-    end
-
-    function GUI:map_anime(list)
-        self:close()
-
-        if type(list) ~= "table" or #list < 1 then
-            return false
-        end
-
-        local title = self._locale:get("MAP_ANIME")
-
-        self._dialog = vlc.dialog(title)
-
-        local row = 1
-        for i = 1, #list do
-            self._dialog:add_label(list[i]:name(), 1, i, 4, 1)
-            row = i
-        end
-
-        self._dialog:add_button(self._locale:get("OKAY"),
-            function() self:close() end, 1, row + 1, 2, 1)
     end
 
     --- Get publisher.

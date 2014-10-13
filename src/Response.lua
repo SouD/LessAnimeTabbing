@@ -1,4 +1,4 @@
--- A My Anime List Bot VLC Extension. Because keeping track of anime is hard!
+-- LessAnimeTabbing. Keep track of your anime without tabbing!
 -- Copyright (C) 2014  Linus Sörensen
 
 -- This program is free software; you can redistribute it and/or
