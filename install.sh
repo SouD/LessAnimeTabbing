@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Path variables
-SRC_DIR=/cygdrive/f/workspace/MALBot/src
-OUT_DIR=/cygdrive/f/workspace/MALBot/bin
+SRC_DIR=/cygdrive/f/workspace/LessAnimeTabbing/src
+OUT_DIR=/cygdrive/f/workspace/LessAnimeTabbing/bin
 SRC=($SRC_DIR/*.lua)
-EXT_NAME=MALBot.lua
+EXT_NAME=LessAnimeTabbing.lua
 OUT=$OUT_DIR/$EXT_NAME
 VLC_DIR="/cygdrive/f/Program Files/VideoLAN/VLC/lua/extensions"
 

@@ -32,6 +32,7 @@ function define_Config()
     Config.EXTENSION = ".properties"
     Config._locale = nil
     Config._name = nil
+    Config._parser = nil
     Config._path = nil
     Config._loaded = false
     Config._values = nil
@@ -43,11 +44,12 @@ function define_Config()
     -- @param config Name of config to load.
     -- @param locale An instance of @class Locale.
     -- @return Instance of @class Config.
-    function Config:new(config, locale)
+    function Config:new(config, locale, parser)
         local c = self._new(self, {
             _locale = locale,
             _name = config,
-            _prefix = "[MALBot Config]: ",
+            _parser = parser,
+            _prefix = "[LessAnimeTabbing Config]: ",
             _values = {}
         })
 
@@ -62,9 +64,9 @@ function define_Config()
     -- @param key Configuration value key.
     -- @return Valued matching key if found or nil if config not loaded.
     function Config:get(key)
-        if self._loaded then
-            return self._values[key]
-        end
+        -- if self._loaded then
+        --     return self._values[key]
+        -- end
     end
 
     --- Load the config.
@@ -122,28 +124,16 @@ function define_Config()
             return false
         end
 
-        for line in file:lines() do
-            line = string.match(line, "^[^#]+") -- Ignore comments
+        local json = file:read("*all")
+        file:close()
 
-            if line then
-                local parts = string_split(line, "=", 2)
-                local k, v = parts[1], parts[2]
-
-                if type(k) == "string" and string.len(k) > 0 then
-                    k = string_trim(k)
-
-                    if string_trim(v) == "true" then
-                        v = true
-                    elseif string_trim(v) == "false" then
-                        v = false
-                    elseif tonumber(v) ~= nil then
-                        v = tonumber(v)
-                    end
-
-                    self._values[k] = v
-                end
-            end
+        -- Shortest possible valid JSON should be [] or {}
+        if string.len(json) < 2 then
+            -- TODO: Log error message
+            return false
         end
+
+
 
         self:debug(string.format(self._locale:get("CONF_LOAD_SUCCESS"), self._name, self._path))
 
@@ -207,17 +197,17 @@ function define_Config()
             return false, errno
         end
 
-        local line = string.format(self._locale:get("CONF_LAST_MODIFIED"), os.date("%Y-%m-%d %H:%M:%S"))
+        -- local line = string.format(self._locale:get("CONF_LAST_MODIFIED"), os.date("%Y-%m-%d %H:%M:%S"))
 
-        file:write(line)
-
-        for k, v in pairs(self._values) do
-            if v ~= nil and string.len(k) > 0 then
-                line = string_trim(k) .. "=" .. tostring(v) .. "\n"
-
-                file:write(line)
-            end
-        end
+        -- file:write(line)
+        --
+        -- for k, v in pairs(self._values) do
+        --     if v ~= nil and string.len(k) > 0 then
+        --         line = string_trim(k) .. "=" .. tostring(v) .. "\n"
+        --
+        --         file:write(line)
+        --     end
+        -- end
 
         file:flush()
         file:close()
@@ -234,7 +224,7 @@ function define_Config()
     -- @param value Value to set.
     -- @return Value on success or nil if config not loaded.
     function Config:set(key, value)
-        self._values[key] = value
-        return value
+        -- self._values[key] = value
+        -- return value
     end
 end

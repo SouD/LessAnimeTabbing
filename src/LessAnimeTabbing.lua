@@ -22,7 +22,6 @@
 -- @class LessAnimeTabbing
 -- @field _config_name Name of config file.
 -- @field _config Contains an instance of @class Config.
--- @field _gui Contains an instance of @class GUI.
 -- @field info Contains extension information.
 -- @field info.title Extension title.
 -- @field info.version Extension version.
@@ -36,12 +35,12 @@
 LessAnimeTabbing = {
     _config_name = "LessAnimeTabbing.LessAnimeTabbing",
     _config = nil,
-    _gui = nil,
+    _endpoints = {},
     info = {
         title = "LessAnimeTabbing",
         version = "0.0.3a",
         author = "Linus Sörensen",
-        url = 'http://soud.se',
+        url = 'https://github.com/SouD/LessAnimeTabbing',
         shortdesc = "LessAnimeTabbing", -- Text shown in context menu
         description = "Keep track of your anime without tabbing!",
         capabilities = {}

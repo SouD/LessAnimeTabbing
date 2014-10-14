@@ -58,7 +58,7 @@ function define_Request()
     -- @return Instance of @class Request.
     function Request:new(method, path, host, data, user_agent)
         return self._new(self, {
-            _prefix = "[MALBot Request]: ",
+            _prefix = "[LessAnimeTabbing Request]: ",
             _method = method,
             _path = path,
             _host = host,
