@@ -16,12 +16,28 @@
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+-- Default config structure, used to generate the
+-- base of the main config file.
+local DEFAULT_CONFIG = {
+    endpoints = {
+        {
+            config = "LessAnimeTabbing.MyAnimeList",
+            name = "MyAnimeList"
+        },
+        {
+            config = "LessAnimeTabbing.Hummingbird",
+            name = "Hummingbird"
+        }
+    }
+}
+
 --- LessAnimeTabbing class.
 -- The main class of the extension. Not defined within a define_ OO function
 -- since we need instant access to information.
 -- @class LessAnimeTabbing
 -- @field _config_name Name of config file.
 -- @field _config Contains an instance of @class Config.
+-- @field _endpoints Array of available endpoints.
 -- @field info Contains extension information.
 -- @field info.title Extension title.
 -- @field info.version Extension version.
@@ -31,11 +47,12 @@
 -- @field info.description Extension description.
 -- @field info.capabilities Extension capabilities like menu, input and meta.
 -- @field _locale Contains an instance of @class Locale.
+-- @field _parser JSON parser.
 -- @field _publisher Contains an instance of @class Publisher.
 LessAnimeTabbing = {
     _config_name = "LessAnimeTabbing.LessAnimeTabbing",
     _config = nil,
-    _endpoints = {},
+    _endpoints = nil,
     info = {
         title = "LessAnimeTabbing",
         version = "0.0.3a",
@@ -46,6 +63,7 @@ LessAnimeTabbing = {
         capabilities = {}
     },
     _locale = nil,
+    _parser = nil,
     _publisher = nil
 }
 
@@ -54,10 +72,20 @@ LessAnimeTabbing = {
 -- @class LessAnimeTabbing
 -- @return nil.
 function LessAnimeTabbing:activate()
+    local parser = OBJDEF:new()
+
     -- Init members
     self._locale = Locale:new()
-    self._config = Config:new(self._config_name, self._locale)
+    self._config = Config:new(self._config_name, self._locale, parser)
     -- Almost like dependency injection! Sugoi!
+
+    -- TODO: Create method to determine if config is empty or null
+    if type(self._config._values) ~= "table" then
+        self:generate_config()
+    end
+
+    -- Get endpoints from config
+    self._endpoints = self._config:get("endpoints")
 
     IO:debug("Activated!")
 end
@@ -68,4 +96,13 @@ end
 -- @return nil.
 function LessAnimeTabbing:deactivate()
     self._config:save()
+end
+
+--- Generate a new config JSON file.
+-- Generates a new config based on the
+-- DEFAULT_CONFIG table.
+-- @return nil.
+function LessAnimeTabbing:generate_config()
+    -- TODO: Output generation message
+    self._config:set(nil, DEFAULT_CONFIG)
 end

@@ -97,7 +97,7 @@ function define_Request()
             "Connection: keep-alive",
             "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Charset: utf-8",
-            "User-Agent: " .. (self._user_agent or "MALBot"),
+            "User-Agent: " .. (self._user_agent or "LessAnimeTabbing"),
         }
 
         for field, value in pairs(self._headers) do

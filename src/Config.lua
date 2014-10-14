@@ -25,11 +25,13 @@ function define_Config()
     -- @field EXTENSION Config file extension constant.
     -- @field _locale Contains an instance of @class Locale.
     -- @field _name Config name.
+    -- @field _parser A JSON parser.
     -- @field _path Config file path.
     -- @field _loaded Config loaded status.
     -- @field _values Configuration key value store.
     Config = inherits(IO)
-    Config.EXTENSION = ".properties"
+    Config.EXTENSION = ".json"
+    Config._altered = false
     Config._locale = nil
     Config._name = nil
     Config._parser = nil
@@ -43,6 +45,7 @@ function define_Config()
     -- @class Config
     -- @param config Name of config to load.
     -- @param locale An instance of @class Locale.
+    -- @param parser A JSON parser.
     -- @return Instance of @class Config.
     function Config:new(config, locale, parser)
         local c = self._new(self, {
@@ -60,13 +63,39 @@ function define_Config()
 
     --- Get config value by key.
     -- Get the current value of key if configuration is loaded.
+    -- Can take a dot separated "path" as key, e.g. PARENT_PROP.CHILD_PROP.
     -- @class Config
     -- @param key Configuration value key.
-    -- @return Valued matching key if found or nil if config not loaded.
+    -- @return Valued matching key if found or nil.
     function Config:get(key)
-        -- if self._loaded then
-        --     return self._values[key]
-        -- end
+        if self._loaded then
+            local nodes = string_split(key, "%.")
+            local value = nil
+
+            if #nodes > 1 then
+                local branch = self._values
+
+                repeat
+                    local node = table.remove(nodes, 1)
+
+                    if branch[node] ~= nil then
+                        if #nodes > 0 then
+                            if type(branch[node]) == "table" then
+                                branch = branch[node]
+                            else
+                                break
+                            end
+                        else
+                            value = branch[node]
+                        end
+                    end
+                until #nodes < 1
+            elseif #nodes == 1 then
+                value = self._values[key]
+            end
+
+            return value
+        end
     end
 
     --- Load the config.
@@ -76,7 +105,8 @@ function define_Config()
     -- If they file is created or found it reads the file line by line,
     -- stripping the comments. Will attempt to cast values where applicable.
     -- The format of the first argument should be a dot separated name,
-    -- e.g: MALBot.API will attempt to load the file vlc_config_dir/MALBot/API.properties.
+    -- e.g: NAMESPACE.FILE will attempt to load the
+    -- file vlc_config_dir/NAMESPACE/FILE.json.
     -- @class Config
     -- @param config Config to load.
     -- @param create Create config if missing.
@@ -127,13 +157,7 @@ function define_Config()
         local json = file:read("*all")
         file:close()
 
-        -- Shortest possible valid JSON should be [] or {}
-        if string.len(json) < 2 then
-            -- TODO: Log error message
-            return false
-        end
-
-
+        self._values = self._parser:decode(json)
 
         self:debug(string.format(self._locale:get("CONF_LOAD_SUCCESS"), self._name, self._path))
 
@@ -159,6 +183,7 @@ function define_Config()
         if self._loaded then
             if type(self._name) == "string" then
                 self._values = {}
+                self._altered = false
                 self._loaded = false
 
                 self:debug(string.format(self._locale:get("CONF_RESET"), self._name))
@@ -174,12 +199,11 @@ function define_Config()
 
     --- Save the config.
     -- Save the current config values in memory to file.
-    -- TODO: Don't rewrite entire config everytime!
     -- @class Config
     -- @return True on success or false on error.
     -- @return Error number on error.
     function Config:save()
-        if not self._loaded then
+        if not self._loaded or not self._altered then
             return false
         end
 
@@ -197,18 +221,8 @@ function define_Config()
             return false, errno
         end
 
-        -- local line = string.format(self._locale:get("CONF_LAST_MODIFIED"), os.date("%Y-%m-%d %H:%M:%S"))
-
-        -- file:write(line)
-        --
-        -- for k, v in pairs(self._values) do
-        --     if v ~= nil and string.len(k) > 0 then
-        --         line = string_trim(k) .. "=" .. tostring(v) .. "\n"
-        --
-        --         file:write(line)
-        --     end
-        -- end
-
+        local json = self._parser:encode_pretty(self._values)
+        file:write(json)
         file:flush()
         file:close()
 
@@ -222,9 +236,14 @@ function define_Config()
     -- @class Config
     -- @param key Key to add or alter.
     -- @param value Value to set.
-    -- @return Value on success or nil if config not loaded.
+    -- @return nil.
     function Config:set(key, value)
-        -- self._values[key] = value
-        -- return value
+        if type(key) == "string" then
+            self._altered = true
+            -- TODO: Handle setting of properties.
+        elseif not key and type(value) == "table" then
+            self._altered = true
+            self._values = value
+        end
     end
 end
