@@ -51,7 +51,8 @@ function define_Publisher()
 
         if count > 0 then
             -- TODO: Inherit IO or use global namespace?
-            vlc.msg.dbg(string.format("%s [MALBot Publisher]: %s sent to %d subscriber(s)",
+            vlc.msg.dbg(string.format(
+                "%s [LessAnimeTabbing Publisher]: %s sent to %d subscriber(s)",
                 os.date("%H:%M:%S"), msg, count))
         end
 

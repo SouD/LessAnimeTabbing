@@ -26,6 +26,7 @@
 local classes = {
     "Locale",
     "IO",
+    "Endpoint",
     "Publisher",
     "Config",
     "Net",
