@@ -16,28 +16,13 @@
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
--- Default config structure, used to generate the
--- base of the main config file.
-local DEFAULT_CONFIG = {
-    endpoints = {
-        {
-            config = "LessAnimeTabbing.MyAnimeList",
-            name = "MyAnimeList"
-        },
-        {
-            config = "LessAnimeTabbing.Hummingbird",
-            name = "Hummingbird"
-        }
-    }
-}
-
 --- LessAnimeTabbing class.
 -- The main class of the extension. Not defined within a define_ OO function
 -- since we need instant access to information.
 -- @class LessAnimeTabbing
--- @field _config_name Name of config file.
--- @field _config Contains an instance of @class Config.
--- @field _endpoints Array of available endpoints.
+-- @field _endpoints Array with available endpoints.
+-- @field _endpoints.class Endpoint class name.
+-- @field _endpoints.config Endpoint config name.
 -- @field info Contains extension information.
 -- @field info.title Extension title.
 -- @field info.version Extension version.
@@ -47,24 +32,25 @@ local DEFAULT_CONFIG = {
 -- @field info.description Extension description.
 -- @field info.capabilities Extension capabilities like menu, input and meta.
 -- @field _locale Contains an instance of @class Locale.
--- @field _parser JSON parser.
--- @field _publisher Contains an instance of @class Publisher.
 LessAnimeTabbing = {
-    _config_name = "LessAnimeTabbing.LessAnimeTabbing",
-    _config = nil,
-    _endpoints = nil,
+    _endpoint_configs = {{
+        class = "MyAnimeListEndpoint",
+        config = "LessAnimeTabbing.MyAnimeList", -- Should this be in the class?
+    }, {
+        class = "HummingbirdEndpoint",
+        config = "LessAnimeTabbing.Hummingbird",
+    }},
+    _endpoints = {},
     info = {
         title = "LessAnimeTabbing",
         version = "0.0.3a",
         author = "Linus Sörensen",
         url = 'https://github.com/SouD/LessAnimeTabbing',
-        shortdesc = "LessAnimeTabbing", -- Text shown in context menu
+        shortdesc = "LessAnimeTabbing", -- Text shown in rclick menu
         description = "Keep track of your anime without tabbing!",
         capabilities = {}
     },
-    _locale = nil,
-    _parser = nil,
-    _publisher = nil
+    _locale = nil
 }
 
 --- Activate LessAnimeTabbing.
@@ -72,22 +58,13 @@ LessAnimeTabbing = {
 -- @class LessAnimeTabbing
 -- @return nil.
 function LessAnimeTabbing:activate()
-    local parser = OBJDEF:new()
-
     -- Init members
     self._locale = Locale:new()
-    self._config = Config:new(self._config_name, self._locale, parser)
-    -- Almost like dependency injection! Sugoi!
 
-    -- TODO: Create method to determine if config is empty or null
-    if type(self._config._values) ~= "table" then
-        self:generate_config()
-    end
+    -- Init endpoints
+    self:init_endpoints()
 
-    -- Get endpoints from config
-    self._endpoints = self._config:get("endpoints")
-
-    IO:debug("Activated!")
+    IO:debug("Activated")
 end
 
 --- Deactivate LessAnimeTabbing.
@@ -95,14 +72,21 @@ end
 -- @class LessAnimeTabbing
 -- @return nil.
 function LessAnimeTabbing:deactivate()
-    self._config:save()
+    IO:debug("Deactivated")
 end
 
---- Generate a new config JSON file.
--- Generates a new config based on the
--- DEFAULT_CONFIG table.
--- @return nil.
-function LessAnimeTabbing:generate_config()
-    -- TODO: Output generation message
-    self._config:set(nil, DEFAULT_CONFIG)
+function LessAnimeTabbing:init_endpoints()
+    local _G = getfenv(0)
+    local parser = OBJDEF:new()
+
+    for i = 1, #self._endpoint_configs do
+        local class = self._endpoint_configs[i].class
+        local config_name = self._endpoint_configs[i].config
+
+        if class and _G[class] ~= nil then
+            local config = Config:new(config_name, self._locale, parser)
+            local endpoint = (_G[class]):new(config)
+            table.insert(self._endpoints, endpoint)
+        end
+    end
 end

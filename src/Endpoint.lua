@@ -24,7 +24,6 @@ function define_Endpoint()
     -- Defines an anime list service endpoint (API).
     -- @class Endpoint
     -- @field _config Instance of @class Config.
-    -- @field _name Name of endpoint.
     Endpoint = inherits(IO)
     Endpoint._config = nil
     Endpoint._name = nil
@@ -34,15 +33,11 @@ function define_Endpoint()
     -- Creates a new instance of @class Endpoint.
     -- @class Endpoint
     -- @param config Instance of @class Config.
-    -- @param name Name of endpoint.
     -- @return Instance of @class Endpoint.
-    function Endpoint:new(config, name)
-        name = (name or "Endpoint")
-
+    function Endpoint:new(config)
         return self._new(self, {
             _config = config,
-            _name = name,
-            _prefix = "[LessAnimeTabbing " .. name .. "]: "
+            _prefix = "[LessAnimeTabbing Endpoint]: "
         })
     end
 
@@ -84,5 +79,9 @@ function define_Endpoint()
     -- @return nil.
     function Endpoint:delete()
         self:warning("Unimplemented abstract method :delete")
+    end
+
+    function Endpoint:name()
+        return self._name
     end
 end

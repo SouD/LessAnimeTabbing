@@ -22,6 +22,7 @@
 -- @return nil
 function oo()
     if classes and #classes > 0 then
+        local _G = getfenv(0)
         for i = 1, #classes do
             local init_func = "define_" .. classes[i]
             vlc.msg.dbg(string.format("%s Loaded class %s", os.date("%H:%M:%S"), classes[i]))

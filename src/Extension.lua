@@ -33,7 +33,8 @@ local classes = {
     "Response",
     "Request",
     "Anime",
-    "GUI"
+    "GUI",
+    "MyAnimeListEndpoint"
 }
 
 --- Get extension description.

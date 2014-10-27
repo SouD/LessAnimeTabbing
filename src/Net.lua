@@ -20,6 +20,9 @@
 -- @return nil.
 function define_Net()
 
+    -- Make sure net module is available if this class is loaded.
+    assert(vlc.net, "Namespace vlc.net not available!")
+
     --- Net class.
     -- Contains methods for using the internet. Sort of.
     -- @class Net
@@ -38,7 +41,6 @@ function define_Net()
     -- @return True if connection was successful or false on error.
     function Net:connect(host, port)
         local l = Locale:new()
-        assert(vlc.net, l:get("ASSERT_VLC_NET_FAIL"))
 
         if self._connected then
             self:disconnect()
@@ -71,7 +73,6 @@ function define_Net()
     -- @return True if disconnected or false on error.
     function Net:disconnect()
         local l = Locale:new()
-        assert(vlc.net, l:get("ASSERT_VLC_NET_FAIL"))
 
         if self._connection == -1 then
             return false
@@ -94,7 +95,6 @@ function define_Net()
     -- @return Response from connection or false on error or nil if no response (socket not ready).
     function Net:recv(size)
         local l = Locale:new()
-        assert(vlc.net, l:get("ASSERT_VLC_NET_FAIL"))
 
         if not self._connected then
             return false
@@ -122,7 +122,6 @@ function define_Net()
     -- @return Amount of chars sent if successful.
     function Net:send(data)
         local l = Locale:new()
-        assert(vlc.net, l:get("ASSERT_VLC_NET_FAIL"))
 
         if not self._connected then
             return false
